@@ -9,8 +9,7 @@ def read_incar(filename='INCAR'):
     incar = open(filename)
     config = ConfigClass()
     config.initialize(filename)
-    #config.setvalues(filename)
-    print(config.config)
+    return config.config
     
 
 def read_xdatcar(filename, skip=0, every=1):

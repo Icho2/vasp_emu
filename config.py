@@ -43,7 +43,6 @@ class ConfigClass:
                 pass
         elif data_type == 'integer':
             try:
-                print(values)
                 self.config[vname] = self.parser.getint('DEFAULT',vname)
             
             except:
