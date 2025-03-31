@@ -5,8 +5,8 @@ from ase.io import read
 from config import ConfigClass
 
 def read_incar(filename='INCAR'):
-    v = Vasp()
-    incar = open(filename)
+    # v = Vasp()
+    # incar = open(filename)
     config = ConfigClass()
     config.initialize(filename)
     return config.config
