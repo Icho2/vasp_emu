@@ -56,7 +56,7 @@ class ConfigClass:
                 sys.stderr.write('Option "%s" should be a float\n' % (vname))
         elif data_type == 'boolean':
             try:
-                self.config[vname] = self.parser.getboolean(vname)
+                self.config[vname] = self.parser.getboolean('DEFAULT',vname)
             except:
                 config_error = True
                 sys.stderr.write('Option "%s" should be a boolean\n' % (vname))
@@ -80,7 +80,7 @@ class ConfigClass:
                 self.parser.read_string("[DEFAULT]\n"+stream.read())
             self.config_path = os.path.abspath(config_file)
         else:
-            print("Specified configuration file %s does not exist" % ''.join(os.path.abspath(config_file)), sys.stderr)
+            print("Specified INCAR '%s' does not exist" % ''.join(os.path.abspath(config_file)), sys.stderr)
             sys.exit(2)
 
         
