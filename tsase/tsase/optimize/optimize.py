@@ -10,7 +10,7 @@ import numpy as np
 
 #from ase.parallel import rank, barrier #deprecated in ase 3.19.0
 from ase.parallel import world, barrier
-from ase.io.trajectory import PickleTrajectory
+from ase.io.trajectory import PickleTrajectory, Trajectory
 
 
 class Dynamics:
@@ -45,7 +45,9 @@ class Dynamics:
 
         if trajectory is not None:
             if isinstance(trajectory, str):
-                trajectory = PickleTrajectory(trajectory, 'w', atoms)
+                #trajectory = PickleTrajectory(trajectory, 'w', atoms)
+                trajectory = Trajectory(trajectory, 'w', atoms)
+                
             self.attach(trajectory)
 
     def get_number_of_steps(self):

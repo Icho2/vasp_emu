@@ -9,7 +9,7 @@ from tsase.optimize import SDLBFGS
 #Read incar
 incar = read_incar()
 iopt = incar['iopt']
-ibrion=incar['ibrion']
+ibrion = incar['ibrion']
 
 #Read poscar
 poscar = ase.io.read('POSCAR')
@@ -33,24 +33,26 @@ poscar.calc = potential
 #set up optimizer 
 calc = None
 
-if iopt == 1:
-    calc = SDLBFGS(poscar, trajectory='path.traj')
+if iopt == 1 and ibrion != 1:
+    calc = SDLBFGS(poscar, trajectory='path.traj', logfile='optimization.log', maxstep=incar['maxstep'], damping=incar['damping'])
 
 elif iopt == 7:
     from ase.optimize import FIRE
-    calc = FIRE(poscar, trajectory='path.traj')
+    calc = FIRE(poscar, trajectory='path.traj', logfile='optimization.log', maxstep=incar['maxstep'], dtmax=incar['dtmax'], Nmin=incar['nmin'], finc=incar['finc'], fdec=incar['fdec'], astart=incar['astart'], fa=incar['fa'], a=incar['a'])
 
-elif ibrion == 1:
+elif ibrion == 1 and iopt != 1:
     from ase.optimize import BFGS 
-    calc = BFGS(poscar, trajectory='path.traj')
+    calc = BFGS(poscar, trajectory='path.traj', logfile='optimization.log', maxstep=incar['maxstep'], alpha=incar['alpha'])
 
 elif ibrion == 2:
     sys.exit("dont waste your time here")
 
-elif ibrion == 3:
+elif iopt == 3 and ibrion == 3:
     from ase.optimize import MDMin
-    calc = MDMin(poscar, trajectory='path.traj')
+    calc = MDMin(poscar, trajectory='path.traj', logfile='optimization.log', dt=incar['dt'], maxstep=incar['maxstep'])
 
+elif ibrion == 1 and iopt == 1:
+    sys.exit('please change your iopt or ibrion')
 else:
     sys.exit('please set a calculation')
 
