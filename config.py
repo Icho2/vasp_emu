@@ -2,7 +2,7 @@ import configparser
 import yaml
 import os, sys, re
 import copy
-import logging
+import logging, warnings
 
 class ConfigClass:
     def __init__(self):
@@ -89,13 +89,14 @@ class ConfigClass:
         
         # Check that all options in config.ini are in the configparser
         config_err = False
-        b = self.parser.defaults()
+        b = self.parser.defaults() # it's not actually defaults, just easiest way to retrieve
 
-        # What happens if INCAR contains unsupported options?
         section_diff = list(set(b) - set(self.config_defaults.keys()))
         if len(section_diff) > 0:
             config_err = True
-            raise NameError('unknown option "%s" \n' % (", ".join(section_diff)))
+            warnings.warn('unknown option(s): "%s" \n' % (", ".join(section_diff)),stacklevel=2) # is a warning necessary?
+            # What happens if INCAR contains unsupported options?
+            for val in section_diff: del b[val]
 
         # Check type of input settings and assignments
         # for section in psections:
