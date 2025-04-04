@@ -34,11 +34,11 @@ poscar.calc = potential
 calc = None
 
 if iopt == 1:
-    calc = SDLBFGS(poscar)
+    calc = SDLBFGS(poscar, trajectory='path.traj')
 
 elif iopt == 7:
     from ase.optimize import FIRE
-    calc = FIRE(poscar)
+    calc = FIRE(poscar, trajectory='path.traj')
 
 elif ibrion == 1:
     from ase.optimize import BFGS 
@@ -49,7 +49,7 @@ elif ibrion == 2:
 
 elif ibrion == 3:
     from ase.optimize import MDMin
-    calc = MDMin(poscar)
+    calc = MDMin(poscar, trajectory='path.traj')
 
 else:
     sys.exit('please set a calculation')
