@@ -7,5 +7,5 @@ What we need to do:
 	4. Add MD
 	5. Update OUTCAR
 	6. Make XDATCAR (Done)
-	7. Figure out optimizers
+	7. Figure out optimizers (Done)
 	8. Testing
