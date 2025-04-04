@@ -91,10 +91,12 @@ class ConfigClass:
         config_err = False
         b = self.parser.defaults()
 
-        section_diff = list(set(b) - set(self.config_defaults.keys()))
-        if len(section_diff) > 0:
-            config_err = True
-            raise NameError('unknown option "%s" \n' % (", ".join(section_diff)))
+        # I removed this so that incars that have more options than we can support (VASP has over 4000 possible tags)
+        # will not cause an error.
+        # section_diff = list(set(b) - set(self.config_defaults.keys()))
+        # if len(section_diff) > 0:
+        #     config_err = True
+        #     raise NameError('unknown option "%s" \n' % (", ".join(section_diff)))
 
         # Check type of input settings and assignments
         # for section in psections:
@@ -119,7 +121,7 @@ class ConfigClass:
         for m in iter1:
             begin,end = m.span()
             idx = lines[begin:end].find("*")+begin
-            sub = f" {str(float(lines[begin:idx])*float(lines[idx+1:end]))} "
+            sub = f" {str(float(lines[begin:idx])*float(lines[idx+1:end]))} " # this may cause an error if indented to be a int . . .
             lines = lines[:begin] + sub + lines[end+1:]
         return lines
 
