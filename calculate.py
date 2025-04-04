@@ -1,26 +1,25 @@
 from vasp import read_incar
 import ase
 import numpy as np
+import os
 from ase.calculators.emt import EMT
 import sys
-#from tsase.tsase.optimize import SDLBFGS
 from tsase.optimize import SDLBFGS
 
 #Read incar
 incar = read_incar()
 iopt = incar['iopt']
 ibrion=incar['ibrion']
-print(incar)
 
 #Read poscar
 poscar = ase.io.read('POSCAR')
 
 #calculate with ase calculator
 '''
-1. Set optimizer
-2. Set potential (calculator)
-3. Convergence criteria
-4. Max steps
+    1. Set optimizer
+    2. Set potential (calculator)
+    3. Convergence criteria
+    4. Max steps
 '''
 
 def get_fmax(poscar, **kwargs):
@@ -29,7 +28,6 @@ def get_fmax(poscar, **kwargs):
         return np.sqrt((forces ** 2).sum(axis=1).max())
 
 potential = EMT()
-#print(incar['nsw'])
 poscar.calc = potential
 
 #set up optimizer 
@@ -44,12 +42,10 @@ elif iopt == 7:
 
 elif ibrion == 1:
     from ase.optimize import BFGS 
-    calc = BFGS(poscar)
+    calc = BFGS(poscar, trajectory='path.traj')
 
 elif ibrion == 2:
     sys.exit("dont waste your time here")
-    #from tsase import CG 
-    #opt = cg
 
 elif ibrion == 3:
     from ase.optimize import MDMin
@@ -58,15 +54,12 @@ elif ibrion == 3:
 else:
     sys.exit('please set a calculation')
 
-#calc = BFGS(poscar)
 max_steps=incar['nsw']
 steps=0
 converged=False
 outcar = open("OUTCAR", 'w')
 while not converged:
         calc.run(fmax=-1*incar['ediffg'],steps=1)
-        #if fmax<-1*incar['ediffg']:
-        #   converged=True
         outcar.write(f'U: {poscar.get_potential_energy()}\n')
         steps+=1
         if steps==max_steps:
@@ -75,5 +68,6 @@ while not converged:
            converged = True        	
 
 outcar.close()
+# Making XDATCAR and CONTCAR files
+traj = ase.io.trajectory.Trajectory('path.traj');ase.io.vasp.write_vasp_xdatcar("XDATCAR", traj);os.remove('path.traj')
 ase.io.write('CONTCAR',poscar,format='vasp')
-
