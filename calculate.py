@@ -2,9 +2,14 @@ from vasp import read_incar
 import ase
 import numpy as np
 import os
-from ase.calculators.emt import EMT
 import sys
 from tsase.optimize import SDLBFGS
+
+# OCP
+from ase.build import fcc100, add_adsorbate, molecule
+from ase.optimize import LBFGS
+from fairchem.core import OCPCalculator
+
 
 #Read incar
 incar = read_incar()
@@ -27,29 +32,34 @@ def get_fmax(poscar, **kwargs):
         forces = poscar.get_forces()
         return np.sqrt((forces ** 2).sum(axis=1).max())
 
-potential = EMT()
+potential = OCPCalculator(
+    model_name="EquiformerV2-31M-S2EF-OC20-All+MD",
+    #model_name="GemNet-OC-Large-S2EF-OC20-All+MD",
+    local_cache="pretrained_models",
+    cpu=True,
+)
 poscar.calc = potential
 
 #set up optimizer 
-calc = None
+dyn = None
 
 if iopt == 1 and ibrion != 1:
-    calc = SDLBFGS(poscar, trajectory='path.traj', logfile='optimization.log', maxstep=incar['maxstep'], damping=incar['damping'])
+    dyn = SDLBFGS(poscar, trajectory='path.traj', logfile='optimization.log', maxstep=incar['maxstep'], damping=incar['damping'])
 
 elif iopt == 7:
     from ase.optimize import FIRE
-    calc = FIRE(poscar, trajectory='path.traj', logfile='optimization.log', maxstep=incar['maxstep'], dtmax=incar['dtmax'], Nmin=incar['nmin'], finc=incar['finc'], fdec=incar['fdec'], astart=incar['astart'], fa=incar['fa'], a=incar['a'])
+    dyn = FIRE(poscar, trajectory='path.traj', logfile='optimization.log', maxstep=incar['maxstep'], dtmax=incar['dtmax'], Nmin=incar['nmin'], finc=incar['finc'], fdec=incar['fdec'], astart=incar['astart'], fa=incar['fa'], a=incar['a'])
 
 elif ibrion == 1 and iopt != 1:
     from ase.optimize import BFGS 
-    calc = BFGS(poscar, trajectory='path.traj', logfile='optimization.log', maxstep=incar['maxstep'], alpha=incar['alpha'])
+    dyn = BFGS(poscar, trajectory='path.traj', logfile='optimization.log', maxstep=incar['maxstep'], alpha=incar['alpha'])
 
 elif ibrion == 2:
     sys.exit("dont waste your time here")
 
 elif iopt == 3 and ibrion == 3:
     from ase.optimize import MDMin
-    calc = MDMin(poscar, trajectory='path.traj', logfile='optimization.log', dt=incar['dt'], maxstep=incar['maxstep'])
+    dyn = MDMin(poscar, trajectory='path.traj', logfile='optimization.log', dt=incar['dt'], maxstep=incar['maxstep'])
 
 elif ibrion == 1 and iopt == 1:
     sys.exit('please change your iopt or ibrion')
@@ -61,7 +71,7 @@ steps=0
 converged=False
 outcar = open("OUTCAR", 'w')
 while not converged:
-        calc.run(fmax=-1*incar['ediffg'],steps=1)
+        dyn.run(fmax=-1*incar['ediffg'],steps=1)
         outcar.write(f'U: {poscar.get_potential_energy()}\n')
         steps+=1
         if steps==max_steps:
