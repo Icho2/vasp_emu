@@ -1,4 +1,8 @@
-  options:
+options:
+    EMULATE:
+        kind: integer
+        default: 0
+        
     IOPT:
       kind: integer
       default: 0
@@ -70,3 +74,11 @@
     DAMPING:
       kind: float
       default: 1.0
+
+    POTENTIAL:
+      kind: string
+      default: "OCP"
+
+    NIMAGE:
+      kind: integer
+      default: 3
