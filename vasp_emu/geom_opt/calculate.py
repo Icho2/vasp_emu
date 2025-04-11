@@ -1,4 +1,4 @@
-from vasp import read_incar
+from vasp_emu.vasp import read_incar
 import ase
 import numpy as np
 import os
@@ -39,7 +39,21 @@ def calculate(incar):
             command='mpirun vasp_std',
         )
         
-    
+    elif incar['potential'] == 'PYAMFF':
+        from pyamff.ase_calc_fortran import aseCalcF
+        try:
+            f = open('mlff.pyamff')
+            potential = aseCalcF()
+        except:
+            from pyamff.ase_calc import aseCalc
+            try:
+                f = open('pyamff.pt')
+                potential = aseCalc()
+            except:
+                sys.exit('Please add a model.')
+        
+        f.close()
+        
     poscar.calc = potential
 
     # Set up optimizer 
@@ -74,7 +88,7 @@ def calculate(incar):
     outcar = open("OUTCAR", 'w')
     while not converged:
             dyn.run(fmax=-1*incar['ediffg'],steps=1)
-            outcar.write(f'U: {poscar.get_potential_energy()}\n')
+            outcar.write(f'U: {poscar.get_potential_energy()}   fmax: {get_fmax(poscar)}\n')
             steps+=1
             if steps==max_steps:
                 sys.exit('we reached NSW')
@@ -86,6 +100,7 @@ def calculate(incar):
     # Making XDATCAR and CONTCAR files
     traj = ase.io.trajectory.Trajectory('path.traj');ase.io.vasp.write_vasp_xdatcar("XDATCAR", traj);os.remove('path.traj')
     ase.io.write('CONTCAR',poscar,format='vasp')
+    
     
     return
 

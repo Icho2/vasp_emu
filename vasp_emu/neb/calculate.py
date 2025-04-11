@@ -3,7 +3,7 @@ from ase.mep import NEB
 from ase.optimize import MDMin
 from ase import Atoms
 from fairchem.core import OCPCalculator
-from vasp import read_incar
+from vasp_emu.vasp import read_incar
 
 def calculate(incar):
     # Read intial and final states:
@@ -31,11 +31,16 @@ def calculate(incar):
     neb.interpolate()
 
     if incar['potential'] == 'OCP':
+        import sys
+        import os
+        sys.stdout = open(os.devnull, 'w')
         potential = OCPCalculator(
             model_name="EquiformerV2-31M-S2EF-OC20-All+MD",
             local_cache="pretrained_models",
             cpu=True,
         )
+
+        sys.stdout = sys.__stdout__
 
     elif incar['POTENTIAL'] == 'Vasp':
         potential = Vasp()

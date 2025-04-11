@@ -1,8 +1,4 @@
 options:
-    EMULATE:
-        kind: integer
-        default: 0
-        
     IOPT:
       kind: integer
       default: 0
@@ -10,6 +6,13 @@ options:
     IBRION:
       kind: integer
       default: 0
+      values:
+         - 0
+         - 1
+         - 2
+         - 3
+         - 4
+                
 
     NSW:
       kind: integer
@@ -82,3 +85,16 @@ options:
     NIMAGE:
       kind: integer
       default: 3
+
+    POTIM:
+      kind: float
+      default: 1.0
+    
+    ICHAIN:
+      kind: integer
+      default: 1
+      values:
+         - 0
+         - 1
+         - 2
+         - 3
