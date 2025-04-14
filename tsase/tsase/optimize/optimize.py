@@ -30,7 +30,7 @@ class Dynamics:
     """
     def __init__(self, atoms, logfile, trajectory):
         self.atoms = atoms
-
+        self.optimizable = atoms.__ase_optimizable__()
         if world.rank != 0:
             logfile = None
         elif isinstance(logfile, str):

@@ -1,6 +1,6 @@
 # Example: O2 Relaxation
 
-This example focuses on relaxing the bond length of an oxygen dimer through geometry optimization with the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm.
+This example focuses on relaxing the bond length of an oxygen dimer through geometry optimization with the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm using a potential from Open Catalyst Project (OCP).
 
 ## Input
 
@@ -37,7 +37,7 @@ MAXMOVE=0.1
 POTENTIAL=OCP
 ```
 
-The INCAR file contains settings for our emulator. In this example, `IOPT` and `POTENTIAL` are the only tags that are not part of VASP. `IOPT` tells the emulator to `IBRION` specifies the optimizer, like in VASP. In this example, `IOPT=0` and `IBRION=1`. This means that this example will use the BFGS example. NOTE that in VASP, the "RMM-DIIS" optimizer would be used for the same settings. `POTENTIAL` tells the emulator which machine-learned potential to use. In this example, `POTENTIAL=OCP`, so a potential from the Open Catalyst Project (OCP) is being used. Since the INCAR does not also specify which potential, the default ("EquiformerV2-31M-S2EF-OC20-All+MD") is being used.
+The INCAR file contains settings for our emulator. In this example, `IOPT` and `POTENTIAL` are the only tags that are not part of VASP. `IOPT=0` tells the emulator that `IBRION` specifies the optimizer, like in VASP. In this example, `IOPT=0` and `IBRION=1`. This means that this example will use the BFGS example. NOTE that in VASP, the "RMM-DIIS" optimizer would be used for the same settings. `POTENTIAL` tells the emulator which machine-learned potential to use. In this example, `POTENTIAL=OCP`, so a potential from OCP is being used. Since the INCAR does not also specify which potential, the default ("EquiformerV2-31M-S2EF-OC20-All+MD") is being used.
 
 ## Calculation and Expected Output
 

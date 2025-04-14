@@ -48,7 +48,7 @@ def calculate(incar):
             from pyamff.ase_calc import aseCalc
             try:
                 f = open('pyamff.pt')
-                potential = aseCalc()
+                potential = aseCalc('pyamff.pt')
             except:
                 sys.exit('Please add a model.')
         

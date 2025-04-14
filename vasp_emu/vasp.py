@@ -2,7 +2,7 @@ import ase
 from ase.calculators.vasp import Vasp
 import numpy
 from ase.io import read
-from config import ConfigClass
+from vasp_emu.config import ConfigClass
 
 def read_incar(filename='INCAR'):
     # v = Vasp()
