@@ -53,6 +53,8 @@ def calculate(incar):
                 sys.exit('Please add a model.')
         
         f.close()
+    else: 
+        raise ValueError("Unknown potential")
         
     poscar.calc = potential
 

@@ -49,6 +49,6 @@ To run this example, you only need to run `vasp_emu`. Several files will be gene
 - OSZICAR: a copy of all the information printed to standard out
 - OUTCAR: contains job-specific information
 - XDATCAR: contains all the structures during the optimization
-- optimization.log: produced by the optimizer
+- dynamics.log: produced by the optimizer
 
 NOTE: Since we are using an OCP Potential, there will also be a folder generated called "pretrained_models". This folder holds the OCP Potential.
