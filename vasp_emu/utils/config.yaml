@@ -1,0 +1,297 @@
+---
+options:
+  # initial guess for the Hessian during optimization 
+  ALPHA:
+    default: 70
+    kind: float
+  
+  # VASP Flag that sets the collision probability for the Anderson thermostat
+  # NOTE: Must be between 0 and 1
+  # Not yet implemented
+  ANDERSON_PROB:
+    default: 0
+    kind: float
+    rules:
+      - .GE. 0 # Hmm, is this okay?, should we use >= instead of GE
+      - .LE. 1
+  
+  # The calculated step is multiplied with this number 
+  # before added to positions for the SDLBFGS algorithm
+  DAMPING:
+    default: 1
+    kind: float
+
+  # VASP FLAG that determines force converge. IF EDIFFG < 0, then it represents the max norm of the force
+  # IF EDIFFG > 0, then converged when abs[E_(i+1) - E_(i)] < EDIFFG
+  # IF EDIFF = 0, then converged after NSW steps
+  EDIFFG:
+    default: -0.01
+    kind: float
+  
+  # Factor to decrease the parameter alpha for FIRE optimizer
+  FADEC:
+    default: 0.99
+    kind: float
+  
+  # Parameter that controls velocity damping for FIRE optimizer
+  FALPHA:
+    default: 0.1
+    kind: float
+  
+  # Intital value of the the parameter alpha for FIRE optimizer
+  FASTART:
+    default: 0.1
+    kind: float
+  
+  # Finite diference step size for line optimizer
+  FDSTEP:
+    default: 5e-3
+    kind: float
+  
+  # Minimum number of iterations before adjusting alpha and dt with FIRE optimizer
+  FNMIN:
+    default: 5
+    kind: integer
+  
+  # Maximum dynamical time step allowed for FIRE optimizer
+  FTIMEMAX:
+    default: 1.0
+    kind: float
+  
+  # Factor to decrease dt for FIRE optimizer
+  FTIMEDEC:
+    default: 0.5
+    kind: float
+
+  # Factor to increase dt for FIRE optimizer
+  FTIMEINC:
+    default: 1.1
+    kind: float  
+   
+  # VASP Flag that determines how the crystal structure changes during calculation
+  # NOTE: VASP allows the setting of -1, 5-8,11,12,40 and 44. These flags are not supported.
+  # For improved dimer method (VASP's IBRION=44), 
+  # please use IOPT > 0, IBRION=3, POTIM = 0, and ICHAIN = 2 together
+  IBRION:
+    default: 0
+    kind: integer
+    values:
+      - 0 # Run Molecular Dynamics
+      - 1 # Optimization via RMM-DIIS
+      - 2 # Optimization via Conjugate Gradient
+      - 3 # Optimization via dampled Molecular Dynamics
+
+  # Specify which transition state/saddle-point finding  method to use
+  # NOTE: VTSTTools allows the setting of 1 and 3. These flags are not supported.
+  ICHAIN:
+    default: -1
+    kind: integer
+    values:
+      - -1 # Either MD or Optimization
+      - 0 # NEB
+      - 2 # Dimer
+  
+  # Number of steps saved when building the inverse Hessian matrix with LBFGS
+  # Not yet implemented
+  ILBFGSMEM:
+    default: 20 
+    kind: integer 
+
+  # Number of NEB images between the fixed endpoints
+  IMAGES:
+    default: 0
+    kind: integer
+  
+  # Initial inverse curvature, used to contruct the inverse Hessian matrix with LBFGS
+  # Not yet implemented
+  INVCURV:
+    default: 0.01
+    kind: float
+
+  # Specify which optimizer to use
+  IOPT:
+    default: 0
+    kind: integer
+    values:
+      - 0 # VASP Optimizers as specified by IBRION
+      - 1 # LBFGS
+      - 2 # Conjugate Gradient
+      - 3 # Quick-Min
+      - 4 # Steepest-Descent
+      - 7 # FIRE
+  
+  # VASP Flag that determines whether the stress tensor is calculated and the DOF
+  # Please see https://www.vasp.at/wiki/index.php/ISIF for more information
+  # Hmmm, do we need this?
+  # NOTE: If IBRION=0, then the default for ISIF is 0
+  # Not yet implemented
+  ISIF:
+    default: 2
+    kind: integer
+    values: 
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+  
+  # VASP Flag that specifies friction coefficients (in inverse picoseconds) when using Langevin themostat
+  # NOTE: The length of the list is equal to the number NTYP (number of Langevin+Newton atom types) species
+  # TODO: Not yet implemented,
+  LANGEVIN_GAMMA:
+    default: 0.0
+    kind: floatlist
+
+  # VASP Flag that specifies friction coefficients (in inverse picoseconds) for lattice DOF 
+  # when using Langevin themostat with NpT ensemble
+  # NOTE: The length of the list is equal to the number NTYP (number of Langevin+Newton atom types) species
+  # TODO: Not yet implemented,
+  # Not yet implemented
+  LANGEVIN_GAMMA_L:
+    default: 0.0
+    kind: float
+
+  # Automatically determine INVCURV when using LBFGS
+  # Not yet implemented
+  LAUTOSCALE:
+    default: True
+    kind: boolean
+
+  # Optimize the NEB globally instead of image-by-image when using LBFGS
+  # Not yet implemented
+  LGLOBAL:
+    default: True
+    kind: boolean
+  
+  # Use a force-based line minimizer for translatoin when using LBFGS
+  # Not yet implemented
+  LLINEOPT:
+    default: False
+    kind: boolean 
+
+  # maximum allowed step size for translation while optimizing
+  # NOTE: This name was changed for ASE in v3.19.3 but VTSTTools
+  # expect it to still be named this instead of MAXSTEP
+  MAXMOVE:
+    default: 0.2
+    kind: float
+  
+  # VASP Flag that specifies the molecular-dynamics-simulation protocol
+  # NOTE: IBRION = 0 is required and only standard MD are currently supported
+  # NOTE: TEBEG, POTIM, and NSW must be set
+  # NOTE: VASP allows the setting of 4,5,11,13 and 21. These flags are not supported.
+  # NOTE: For Anderson Thermostat, only the NVT/NVE ensemble are currently supported 
+  #  ANDERSEN_PROB must be set for this to run. For NVE, set it to 0.0. Otherwise, NVT
+  # NOTE: For langevin themostat, set ISIF=2 for NVT ensemble and ISIF=3 for NpT
+  #       LANGEVIN_GAMMA must be set for both, but NpT also requires LANGEVIN_GAMMA_L and PMASS
+  #       PSTRESS is optional
+  # Not yet completely-implemented (only 0)
+  MD_ALGO:
+    default: 0
+    kind: integer
+    values:
+      - 0 # Velocity-Verlet, NVE ensemble
+      - 1 # Anderson Thermostat: NVT/NVE ensemble (other configs)
+      - 2 # Nose-Hoover thermostat, must set SMASS
+      - 3 # Langevin Themostat: NVT/NpT ensembles
+  
+  # VASP FLAG that controls how often the kinetic energy is scaled if SMASS=-1
+  # All other behavior not currently supported
+  # Not yet implemented
+  NBLOCK:
+    default: 1
+    kind: integer
+  
+  # NOT SURE WHAT THIS DOES
+  NIMAGE:
+    default: 3
+    kind: integer
+  
+  # NOT SURE WHAT THIS DOES
+  NMIN:
+    default: 5
+    kind: integer
+  
+  # VASP Flag that sets the maximum number of molecular dynamics/optimization step
+  # VASP Allows, NSW to be -1, this is not supported
+  NSW:
+    default: 0 
+    kind: integer
+    rules:
+      - .GE. 0
+  
+  # VASP Flag that set a fictitious mass (in amu) to the lattice DOF when using
+  # the Langevin thermostat under NpT ensemble
+  # Not yet implemented
+  PMASS:
+    default: 1000.0
+    kind: float 
+  
+  # Flag that specifies the types of potentials that can be used
+  POTENTIAL:
+    default: OCP
+    kind: string
+    values:
+      - OCP
+      - PYAMFF
+      - EMT
+  
+  # VASP FLAG: IF IBRION=0, gives the timestep (in femtoseconds) for the MD run
+  # IF IBRION=1,2,3, gives the scaling factor for the step widths (not yet implemented)
+  POTIM:
+    default: 0.5
+    kind: float
+
+  # VASP Flag that sets the external pressure in kB (not yet implemented)
+  # Not yet implemented
+  PSTRESS:
+    default: 0.0
+    kind: float
+
+  # Ratio between force and step size for Steepest Descent
+  # Not yet implemented
+  SDALPHA:
+    default: 0.01
+    kind: float 
+  
+  # VASP Flag that controls the velocities during an MD run
+  # NOTE: Only allows -3, -2, -1, and floats greater than or equal to 0
+  # for -3: NVE ensemble is used (MDALGO = 1 and ANDERSON_PROB = 0.0 recommended instead)
+  # for -2: keep initial velovity contant, must be included in poscar, POTIM = 1.0
+  # for -1: velocitys scaled each step to temperaure (TODO: ADD NBLOCK as an option MOD(NSTEP/NBLOCK) == 1)
+  # T=TEBEG+(TEEND-TEBEG)xNSTEP/NSW (where NSTEP is current step starting from 1)
+  # TODO: Add NBLOCK AS AN OPTION. FOR NOW, AUTO = 1
+  # Not yet implemented
+  SMASS:
+    default: -3.0
+    kind: float
+    rules:
+      - .EQ. -3 .OR. .EQ. -2 .OR. .EQ. -1 .OR. .GE. 0
+  
+  # VASP Flag that sets the starting temperture (in K) of MD run
+  # TODO: Determine if this temp must be rescaled, hmmm
+  # Not yet implemented
+  TEBEG:
+    default: 0.0
+    kind: float
+    rules:
+      - .GE. 0.0
+  
+  # VASP Flag that sets the final temperture (in K) of MD run
+  # NOTE: while the default says 0.0, it will be set to TEBEG if unspecified
+  # Not yet implemented
+  TEEND:
+    default: 0.0
+    kind: float 
+    rules:
+      - .GE. 0.0
+  
+  # Time step for Optimizaton algorithms
+  # Not yet implemented
+  TIMESTEP:
+    default: 0.1
+    kind: float 

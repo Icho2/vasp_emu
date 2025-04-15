@@ -1,4 +1,4 @@
-EDIFFG = -0.01
+EDIFFG = -0.04
 POTIM = 1
 ISIF = 1
 MD_ALGO = 0

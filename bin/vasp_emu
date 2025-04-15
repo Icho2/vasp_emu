@@ -1,27 +1,23 @@
 #!/usr/bin/env python3
-# Here we will read the INCAR file and decide what the user wants to run. It will be the one and only executable all users run.
-import subprocess
+""" Modules """
+import argparse
+from vasp_emu.emulate import Emulator
 
-from vasp_emu.vasp import read_incar
+def get_args():
+    """Parse all command line arguments for vasp_emu"""
+    parser = argparse.ArgumentParser(
+                description="VASP Emulator Using Machine-Learned Atomic Potentials",
+                prog="vasp_emu")
+    parser.add_argument('INCAR',type=str,default='INCAR',nargs='?',
+                        help='INCAR file with configuration settings (DEFAULT: INCAR)')
+    parser.add_argument("-i","--initial-image",type=str,default='POSCAR',nargs='?',
+                        help='File containing initial-image (DEFAULT: POSCAR)')
+    parser.add_argument("-f","--final-image",type=str,default=None,nargs='?',
+                        help='File containing initial-image for NEB (DEFAULT: None)')
+    parser.add_argument("-R","--reset",action="store_true",
+                        help='Reset your directory (DEFAULT: False)')
+    return parser.parse_args()
 
-#read incar
-incar = read_incar()
-
-if incar['ichain'] == 0: #NEB
-    from vasp_emu.neb.calculate import calculate
-    calculate(incar)
-
-elif incar['ibrion'] == 3 and incar['ichain'] == 2 and incar['potim'] == 0: #Dimer
-    from vasp_emu.dimer.calculate import test_dimer_method
-    test_dimer_method(incar)
-
-elif incar['ibrion'] == 1 or incar['ibrion'] == 2 or incar['ibrion'] == 3: # geometry_relaxation
-    from vasp_emu.geom_opt.calculate import calculate
-    calculate(incar)
-
-elif incar['ibrion'] == 0: #MD
-    from vasp_emu.md.calculate import calculate
-    calculate(incar)
-    
-else:
-    print('Fix emulate tag')
+if __name__ == "__main__":
+    emu = Emulator(get_args())
+    emu.run()

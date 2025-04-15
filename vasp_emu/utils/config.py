@@ -16,14 +16,18 @@ class ConfigClass:
         self.config_defaults = yaml.load(yaml_file, Loader=yaml.BaseLoader)['options']
         yaml_file.close()
         self.config_defaults = {k.lower(): v for k, v in self.config_defaults.items()}
-
+        #TODO: If NSW=-1 or 0 and IBRION is unset, the default value should be -1 to indicate no optimizer
+        #TODO: ISIF=0 for default if IBRION=0 or LHFCALC = .TRUE.
         # Pass default settings to parser
+        # SMASS: Only allows -3, -2, -1, and floats greater than or equal to 0
+        # TEEND: while the default says 0.0, it will be set to TEBEG if unspecified
+        # ANdersen_prob must be between 0 and 1
         for key in self.config_defaults:
             kattr = self.config_defaults[key]
             self.parser['DEFAULT'][key.lower()] = kattr['default']
 
     # Check legality and set values
-    def setValues(self, data_type, vname, values=None):
+    def setValues(self, data_type, vname, values=None, rules=None):
         config_error = False
         if data_type == 'integerlist':
             try:
@@ -46,16 +50,23 @@ class ConfigClass:
         elif data_type == 'integer':
             try:
                 self.config[vname] = self.parser.getint('DEFAULT',vname)
-            
             except:
                 config_error = True
                 sys.stderr.write('Option "%s" should be a integer\n' % (vname))
+            else:
+                if rules is not None:
+                    for rule in rules:
+                        config_error = self.check_valid(vname,rule) or config_error
         elif data_type == 'float':
             try:
                 self.config[vname] = self.parser.getfloat('DEFAULT', vname)
             except:
                 config_error = True
                 sys.stderr.write('Option "%s" should be a float\n' % (vname))
+            else:
+                if rules is not None:
+                    for rule in rules:
+                        config_error = self.check_valid(vname,rule) or config_error
         elif data_type == 'boolean':
             try:
                 self.config[vname] = self.parser.getboolean('DEFAULT',vname)
@@ -102,10 +113,18 @@ class ConfigClass:
         # for section in psections:
         defaults = self.config_defaults
         for op in b:
-            if 'values' in defaults[op]:
-                config_err = self.setValues(defaults[op]['kind'], op, values=defaults[op]['values'])
+            if 'values' in defaults[op] and 'rules' in defaults[op]:
+                err = self.setValues(defaults[op]['kind'], op, values=defaults[op]['values'], rules=defaults[op]['rules'])
+            elif 'values' in defaults[op]:
+                err = self.setValues(defaults[op]['kind'], op, values=defaults[op]['values'])
+            elif 'rules' in defaults[op]:
+                err = self.setValues(defaults[op]['kind'], op, rules=defaults[op]['rules'])
             else:
-                config_err = self.setValues(defaults[op]['kind'], op)
+                err = self.setValues(defaults[op]['kind'], op)
+            # this means that we won't accidently reset config_err to F
+            # but still allows us to print all the values that are wrong before exiting
+            if not config_err and err:
+                config_err = True
         if config_err:
             sys.exit(2)
 
@@ -124,6 +143,40 @@ class ConfigClass:
             sub = f" {' '.join(int(lines[begin:idx])*[lines[idx+1:end]])} "
             lines = lines[:begin] + sub + lines[end+1:]
         return lines
+
+    # Usually, should only be used for ints and floats that have a wide range of allowed values
+    def check_valid(self,vname,rule):
+        config_err = True
+        txt = ""
+        #TODO: Maybe  also AND?, depends
+        if ".OR." in rule:
+            sub_rules = rule.split(".OR.")
+        else:
+            sub_rules = [rule]
+
+        for i,r in enumerate(sub_rules):
+            comp = r.strip()[:4]
+            val = r.strip()[4:].strip()
+            if comp == ".GE.":
+                err = not self.config[vname] >= type(self.config[vname])(val)
+            elif comp == ".GT.":
+                err = not self.config[vname] > type(self.config[vname])(val)
+            elif comp == ".LE.":
+                err = not self.config[vname] <= type(self.config[vname])(val)
+            elif comp == ".LT.":
+                err = not self.config[vname] > type(self.config[vname])(val)
+            elif comp == ".EQ.":
+                err = not self.config[vname] == type(self.config[vname])(val)
+            elif comp == ".NE.":
+                err = not self.config[vname] != type(self.config[vname])(val)
+            else:
+                raise RuntimeError("Unknown rule given:",rule)
+            config_err = config_err and err
+            txt += f"({vname.upper()} {r.strip()})" + (" .OR. " if i < len(sub_rules)-1 else "")
+        if config_err:
+            sys.stderr.write(f"Option '{vname.upper()}' does not meet the following criteria: ")
+            sys.stderr.write(f"{txt}\n")
+        return config_err
 
 if __name__ == "__main__":
     config = ConfigClass()

@@ -1,0 +1,97 @@
+"""Modules"""
+import time
+from math import sqrt
+
+import ase
+from ase import units
+from ase.optimize.optimize import Dynamics
+from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+
+from vasp_emu.job.job import Job
+
+def opt_log(self, forces=None) -> str:
+    """
+        Redefine the behavior of the log function for Dynamics. 
+        
+        Arguments:
+            forces (list of floats) : The forces that correspond to the optimizable object
+        Returns:
+            Message to be sent to the logger
+    """
+    if forces is None:
+        forces = self.optimizable.get_forces()
+    fmax = sqrt((forces ** 2).sum(axis=1).max())
+    epot = self.optimizable.get_potential_energy() / len(self.optimizable)
+    ekin = self.atoms.get_kinetic_energy() / len(self.optimizable)
+    etot = epot+ekin
+    t = time.localtime()
+    name = self.__class__.__name__
+    # everything above this line exactly matches the Optimizer.log()
+    msg = ""
+    if self.nsteps == 0:
+        msg += "All energies are eV per atoms\n"
+        args = (" " * len(name), "Step", "Time", " Epot ", " Ekin ",  " Etot ", "fmax", "Temp(K)")
+        msg += "%s  %4s %10s %14s %12s %12s %10s %12s\n" % args
+
+    args = (name, self.nsteps, t[3], t[4], t[5], epot, ekin, etot, fmax, ekin / (1.5 * units.kB))
+    msg += "%s:  %3d     %02d:%02d:%02d %12.6f %12.6f %12.6f %12.6f %10.2f" % args
+    return msg
+
+class MDJob(Job):
+    """ 
+    An instance of the Job class used to run molecular dynamics
+    
+    Attributes:
+        job_name (str): name of the job
+    """ 
+    def __init__(self,T_init:int=300,T_final:int=None,**kwargs):
+        """
+        Construct an OptJob
+        
+        Arguments:
+            init_temp (int) : initial temperature of the MD simulation
+            final_temp (int) : final temperature of the MD simulation
+            Please refer to the parent Job Class
+        """
+        super().__init__(**kwargs)
+        self.job_name = "molecular-dynamics"
+        self.init_temp = T_init
+        self.final_temp = T_final if T_final is not None else T_init
+
+    def set_dynamics(self, name) -> None:
+        """
+        Extend the set_dynamics function in the parent Job class by modifying the logger
+        Redirect output to both stdout and a file
+        
+        Arguments:
+            name (str): the input argument for set_dynamics in the parent Job class
+        """
+        super().set_dynamics(name)
+        self.dynamics.log = opt_log.__get__(self.dynamics,Dynamics)
+        self.dynamics.attach(lambda : self.dyn_logger.info(self.dynamics.log()),interval=1)
+
+    def calculate(self):
+        """
+        Perform the MD simulation
+        """
+        curr_structure = self.structures["initial"]
+        max_steps = self.job_params["max_steps"]
+        curr_structure.calc = self.potential
+        MaxwellBoltzmannDistribution(curr_structure,temperature_K=300)
+
+        steps = 0
+        finished = False
+        while not finished:
+            self.dynamics.run(steps=1)
+            if self.logger is not None:
+                self.logger.debug(f'U: {curr_structure.get_potential_energy()}   ' + \
+                                    f'fmax: {self.get_fmax(curr_structure)}')
+            # CONTCAR should be written after each step, used to restart jobs
+            ase.io.write('CONTCAR',curr_structure,format='vasp')
+            steps += 1
+            if steps == max_steps:
+                if self.logger is not None:
+                    self.logger.info('Reached NSW')
+                finished = True
+        self.create_xdatcar(False)
+        self.structures['final'] = curr_structure
