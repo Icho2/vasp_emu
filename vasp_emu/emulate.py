@@ -176,13 +176,13 @@ class Emulator():
             job_params["num_img"] = self.params["num_img"]
             self.job = NEBJob(
                         init_struct=ase.io.read(self.user_settings["initial_image_loc"]),
-                        final_struct=ase.io.read(self.user_settings["initial_image_loc"]),
+                        final_struct=ase.io.read(self.user_settings["final_image_loc"]),
                         dyn_name = self.dynamics_name,
                         dyn_args = self.dyn_flags,
                         job_params = job_params,
                         logger=self.outcar)
         elif self.config['ichain'] == 2:
-            if (self.config['ibrion'] == 0) and (self.config['potim'] == 0):
+            if (self.config['ibrion'] == 3) and (self.config['potim'] == 0):
                 self.job = DimerJob(
                         init_struct=ase.io.read(self.user_settings["initial_image_loc"]),
                         dyn_name = self.dynamics_name,
@@ -190,7 +190,7 @@ class Emulator():
                         job_params = job_params,
                         logger=self.outcar)
             else:
-                raise AttributeError("To run dimer, INCAR must include IBRION=0 and POTIM=0")
+                raise AttributeError("To run dimer, INCAR must include IBRION=3 and POTIM=0")
         elif self.config["ibrion"] == 0:
             self.job = MDJob(init_struct=ase.io.read(self.user_settings["initial_image_loc"]),
                        dyn_name = self.dynamics_name,

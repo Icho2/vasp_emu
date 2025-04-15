@@ -78,7 +78,9 @@ class OptJob(Job):
             # CONTCAR should be written after each step, used to restart jobs
             ase.io.write('CONTCAR',curr_structure,format='vasp')
             steps += 1
-            if steps == max_steps or self.get_fmax(curr_structure) < max_force:
+            if self.get_fmax(curr_structure) < max_force:
+                finished = True
+            elif steps == max_steps:
                 if self.logger is not None:
                     self.logger.info('Reached NSW')
                 finished = True
