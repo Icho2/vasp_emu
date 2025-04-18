@@ -22,13 +22,13 @@ def opt_log(self, forces=None):
         forces = self.optimizable.get_forces()
     fmax = sqrt((forces ** 2).sum(axis=1).max())
     e = self.optimizable.get_potential_energy()
-    T = time.localtime()
+    t = time.localtime()
     name = self.__class__.__name__
     # everything above this line exactly matches the Optimizer.log()
     msg = ""
     if self.nsteps == 0:
         msg += "=======================================================\n"
-        msg += f"{" " * len(name)}  {"Step":4s} {"Time":>9s} {"Energy":>13s}  {"fmax":>10s}\n"
+        msg += f'{" " * len(name)}  {"Step":4s} {"Time":>9s} {"Energy":>13s}  {"fmax":>10s}\n'
 
     msg += f"{name}:  {self.nsteps:3d}    {t[3]:02d}:{t[4]:02d}:{t[5]:02d} {e:12.6f} {fmax:12.6f}"
     return msg

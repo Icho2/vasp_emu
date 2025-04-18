@@ -26,7 +26,7 @@ def opt_log(self, forces=None) -> str:
     msg = ""
     if self.nsteps == 0:
         msg += "=======================================================\n"
-        msg += f"{" " * len(name)}  {"Step":4s} {"Time":>9s} {"Energy":>13s}  {"fmax":>10s}\n"
+        msg += f'{" " * len(name)}  {"Step":4s} {"Time":>9s} {"Energy":>13s}  {"fmax":>10s}\n'
 
     msg += f"{name}:  {self.nsteps:3d}    {t[3]:02d}:{t[4]:02d}:{t[5]:02d} {e:12.6f} {fmax:12.6f}"
     return msg

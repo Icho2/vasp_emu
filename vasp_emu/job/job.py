@@ -69,7 +69,7 @@ class Job(ABC):
             self.dynamics = BFGS(curr_structure, **self.dyn_args)
         elif name == "CG":
             self.dynamics = SciPyFminCG(curr_structure,**self.dyn_args)
-        elif name == "Fire":
+        elif name == "FIRE":
             self.dynamics = FIRE(curr_structure, **self.dyn_args)
         elif name == "MDMin":
             self.dynamics = MDMin(curr_structure,**self.dyn_args)
