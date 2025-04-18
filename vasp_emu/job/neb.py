@@ -62,8 +62,8 @@ class NEBJob(Job):
                 self.logger.info(f"Image {i}:")
                 for j, atom in enumerate(atoms):
                     self.logger.info(f"Atom {j}: {atom.symbol}, Position: {atom.position}")
-        self.neb = NEB(self.images, allow_shared_calculator=True)
-        self.neb.interpolate()
+        self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
+        self.neb.interpolate(apply_constraint=True)
 
 
     def set_dynamics(self, name) -> None:
@@ -82,7 +82,7 @@ class NEBJob(Job):
         """
         Perform the NEB Calculation
         """
-        for image in self.images:
+        for image in self.images:  # NOTE: only works when shared calculator is enabled
             image.calc = self.potential
         max_force = self.job_params["fmax"]
         max_steps = self.job_params["max_steps"]

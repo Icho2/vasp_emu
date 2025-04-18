@@ -71,14 +71,12 @@ class Job(ABC):
             self.dynamics = SciPyFminCG(curr_structure,**self.dyn_args)
         elif name == "FIRE":
             self.dynamics = FIRE(curr_structure, **self.dyn_args)
-        elif name == "MDMin":
+        elif name == "MDMin" or name == "QuickMin":
             self.dynamics = MDMin(curr_structure,**self.dyn_args)
         elif name == "SD":
             raise NotImplementedError("SD")
         elif name == "SDLBFGS":
             self.dynamics = SDLBFGS(curr_structure,**self.dyn_args)
-        elif name == "QuickMin":
-            raise NotImplementedError("QuickMin")
         elif name == "MD":
             self.dynamics = VelocityVerlet(curr_structure,**self.dyn_args)
         else:
