@@ -204,7 +204,7 @@ class Emulator():
                        job_params = job_params,
                        logger=self.outcar)
 
-        self.job.set_potential(ptype=self.config["potential"])
+        self.job.set_potential(ptype=self.config["potential"], pname=self.OCP_potential())
         self.job.calculate()
 
     def clean(self) -> None:
@@ -212,3 +212,9 @@ class Emulator():
         for file in ["CONTCAR","OSZICAR","OUTCAR","XDATCAR","dynamics.log","dynamics.traj"]:
             if os.path.isfile(file):
                 os.remove(file)
+    
+    def OCP_potential(self):
+        if self.config['potential'] != 'OCP':
+            return None
+
+        return self.config['ocppot']

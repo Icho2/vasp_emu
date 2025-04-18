@@ -1,5 +1,0 @@
-
-al = tsase.calculators.al()
-_get_ca().set_calculator(al)
-
-

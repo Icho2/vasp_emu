@@ -1,5 +1,0 @@
-
-lisi = tsase.calculators.lisi()
-_get_ca().set_calculator(lisi)
-
-

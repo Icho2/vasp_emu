@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import numpy as np
-from tsase.optimize.optimize import Optimizer
+from vasp_emu.opt.optimize import Optimizer
 
 class SDLBFGS(Optimizer):
     """Limited memory BFGS optimizer.

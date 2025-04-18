@@ -10,7 +10,7 @@ from ase.calculators.vasp import Vasp
 from ase.md.verlet import VelocityVerlet
 from ase.optimize import BFGS, FIRE, MDMin
 from ase.optimize.sciopt import SciPyFminCG
-from tsase.optimize.sdlbfgs import SDLBFGS
+from vasp_emu.opt.sdlbfgs import SDLBFGS
 
 class Job(ABC):
     """ 

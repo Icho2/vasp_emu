@@ -1,5 +1,0 @@
-
-si = tsase.calculators.si()
-_get_ca().set_calculator(si)
-
-
