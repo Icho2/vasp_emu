@@ -51,34 +51,37 @@ class Job(ABC):
         self.logger = logger
         self.dyn_args = dyn_args
         self.job_params = job_params
-        self.set_dynamics(dyn_name)
+        self.set_optimizer(dyn_name)
 
     @abstractmethod
     def calculate(self) -> None:
         """ An abstract method that must be defined by each instance of the Job class"""
+    
+    def set_dynamics(self) -> None:
+        curr_structure = self.structures["initial"]
+        self.dynamics = self.optimizer(curr_structure,**self.dyn_args)
 
-    def set_dynamics(self, name:str) -> None:
+    def set_optimizer(self, name:str) -> None:
         """
         Set the dynamics/optimizer object that will be used to guide the Job
         
         Arguments:
                 name (str): Specifies the dynamics/optimizer object to be used
         """
-        curr_structure = self.structures["initial"]
         if name == "BFGS":
-            self.dynamics = BFGS(curr_structure, **self.dyn_args)
+            self.optimizer = BFGS
         elif name == "CG":
-            self.dynamics = SciPyFminCG(curr_structure,**self.dyn_args)
+            self.optimizer = SciPyFminCG
         elif name == "FIRE":
-            self.dynamics = FIRE(curr_structure, **self.dyn_args)
+            self.optimizer = FIRE
         elif name == "MDMin" or name == "QuickMin":
-            self.dynamics = MDMin(curr_structure,**self.dyn_args)
+            self.optimizer = MDMin
         elif name == "SD":
             raise NotImplementedError("SD")
         elif name == "SDLBFGS":
-            self.dynamics = SDLBFGS(curr_structure,**self.dyn_args)
+            self.optimizer = SDLBFGS
         elif name == "MD":
-            self.dynamics = VelocityVerlet(curr_structure,**self.dyn_args)
+            self.optimizer = VelocityVerlet
         else:
             raise ValueError(f"Unknowwn dynamics type '{name}'")
         self.set_dynamics_logger()

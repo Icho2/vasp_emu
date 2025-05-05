@@ -71,12 +71,14 @@ calculate()
 
 NEBJob Class
 ============
-- the example I have doesn't really converge, even before changed framework, bad example?
   
 __init__
 --------
 - Figure out which is just for the example, and what's needed universally
 - The loggers should totally be set to debug level instead of info
+- What happens if someone gives a traj file with multiple images? I think this should be supported.
+   - Command line option or just scan?
+   - Also, should support images being given in directories as POSCARs (like VASP) 
 
 set_dynamics()
 --------------
@@ -125,3 +127,5 @@ General
 - logger.info("Reached NSW") isn't printing. . . not sure why
 - All jobs doe the calc=self.potential, should I just move it to the Job class?
     -  No, NEB would have problems . . .
+ - INCAR can't read comments on same line as tag, figure out what that's about and if fixable
+    - Okay, let's be honest, totally fixable. Just find and strip. Just need to do it
