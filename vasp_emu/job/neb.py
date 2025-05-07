@@ -4,8 +4,7 @@ import time
 from math import sqrt
 
 from ase.mep import NEB
-from ase.optimize.optimize import Optimizer
-
+from ase.optimize.optimize import Optimizer, OptimizableAtoms
 from vasp_emu.job.job import Job
 from ase.io import write
 
@@ -54,10 +53,7 @@ class NEBJob(Job):
         self.images = [self.structures["initial"]]
         self.images.extend([self.structures["initial"].copy()]*self.job_params['num_img'])
         self.images.extend([self.structures["final"]])
-        # Sort atoms by symbols and positions
-        #for image in self.images:
-            #image.arrays['positions'] = image.arrays['positions'][image.arrays['numbers'].argsort()]
-            #image.arrays['numbers'] = image.arrays['numbers'][image.arrays['numbers'].argsort()]
+        
         if self.logger is not None:
             for i, atoms in enumerate(self.images):
                 self.logger.info(f"Image {i}:")
@@ -65,16 +61,16 @@ class NEBJob(Job):
                     self.logger.info(f"Atom {j}: {atom.symbol}, Position: {atom.position}")
         self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
         self.neb.interpolate(apply_constraint=True)
+        self.set_dynamics()
 
-    def set_dynamics(self, name) -> None:
+    def set_dynamics(self) -> None:
         """
         Extend the set_dynamics function in the parent Job class by modifying the logger
         Redirect output to both stdout and a file
-        
-        Arguments:
-            name (str): the input argument for set_dynamics in the parent Job class
         """
-        super().set_dynamics(name)
+        # don't call super(), neb is special
+        # super().set_dynamics(name)
+        self.dynamics = self.optimizer(self.neb,**self.dyn_args)
         self.dynamics.log = opt_log.__get__(self.dynamics,Optimizer)
         self.dynamics.attach(lambda : self.dyn_logger.info(self.dynamics.log()),interval=1)
 
@@ -86,8 +82,7 @@ class NEBJob(Job):
             image.calc = self.potential
         max_force = self.job_params["fmax"]
         max_steps = self.job_params["max_steps"]
-        
-        self.dynamics.atoms = self.neb
+
         steps = 0
         finished = False
         while not finished:
@@ -97,6 +92,6 @@ class NEBJob(Job):
                 if self.logger is not None:
                     self.logger.info('Reached NSW')
                 finished = True
-            # if self.get_fmax(self.curr_structure)<fmax:
-                # finished = True
+            # if self.get_fmax(self.curr_structure)<max_force:
+            #     finished = True
         # self.create_xdatcar()

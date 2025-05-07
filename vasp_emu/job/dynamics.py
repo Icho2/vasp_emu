@@ -53,20 +53,18 @@ class MDJob(Job):
             final_temp (int) : final temperature of the MD simulation
             Please refer to the parent Job Class
         """
-        super().__init__(**kwargs)
+        super().__init__(**kwargs) # always first
         self.job_name = "molecular-dynamics"
         self.init_temp = T_init
         self.final_temp = T_final if T_final is not None else T_init
+        self.set_dynamics() # always last
 
-    def set_dynamics(self, name) -> None:
+    def set_dynamics(self) -> None:
         """
         Extend the set_dynamics function in the parent Job class by modifying the logger
         Redirect output to both stdout and a file
-        
-        Arguments:
-            name (str): the input argument for set_dynamics in the parent Job class
         """
-        super().set_dynamics(name)
+        super().set_dynamics()
         self.dynamics.log = opt_log.__get__(self.dynamics,Dynamics)
         self.dynamics.attach(lambda : self.dyn_logger.info(self.dynamics.log()),interval=1)
 

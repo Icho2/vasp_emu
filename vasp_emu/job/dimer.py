@@ -43,6 +43,7 @@ class DimerJob(Job):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
         self.job_name = "dimer"
+        self.set_dynamics() # always last
 
     def calculate(self) -> None:
         """
