@@ -161,7 +161,7 @@ class Emulator():
         if iopt == 4:
             return "SD"
         if iopt == 7:
-            params = ["trajectory","maxstep","dtmax","nmin","finc","fdec","astart","fa","a"]
+            params = ["trajectory","maxstep","dtmax","finc","fdec","astart","fa","a"]
             self.dyn_flags = {key: self.params[key] for key in params}
             return "FIRE"
         raise ValueError(f"Unsupported IOPT flag: {iopt}")
