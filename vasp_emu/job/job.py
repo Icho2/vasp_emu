@@ -39,9 +39,6 @@ class Job(ABC):
             final_struct (dict): an Atoms object that contains the final structure (OPTIONAL)
             logger (logging.logger): A logger to record job information (OPTIONAL)
         """
-        if init_struct is None:
-            raise ValueError("The initial structure must be provided!")
-
         # Attributes to be set later
         self.job_name = ""
         self.potential = None

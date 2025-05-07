@@ -170,11 +170,17 @@ class Emulator():
         """Run the emulator"""
         job_params = {key: self.params[key] for key in ["max_steps","fmax"]}
 
-        if self.config['ichain'] == 0:
+        if self.config['ichain'] == 0:  # NEB
             job_params["num_img"] = self.params["num_img"]
+            if self.user_settings["final_image_loc"] is None:  # assume that the user has run nebmake
+                init_struct = None  # undo default value of --initial-image
+                final_struct = None
+            else:
+                init_struct = ase.io.read(self.user_settings["initial_image_loc"])
+                final_struct = ase.io.read(self.user_settings["final_image_loc"])
             self.job = NEBJob(
-                        init_struct=ase.io.read(self.user_settings["initial_image_loc"]),
-                        final_struct=ase.io.read(self.user_settings["final_image_loc"]),
+                        init_struct=init_struct,
+                        final_struct=final_struct,
                         dyn_name = self.dynamics_name,
                         dyn_args = self.dyn_flags,
                         job_params = job_params,

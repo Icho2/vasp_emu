@@ -63,8 +63,12 @@ class NEBJob(Job):
             self.images.append(self.structures["final"])
         else:
             # assume nebmake was already run; 00, 01, ... directories exist
+            # the directory n_images+2 shouldn't exist
+            if os.path.exists(neb_dir_name(n_images+2)):
+                raise ValueError(f"Directory {neb_dir_name(n_images+2)} exists.\n"
+                                  "Double check the IMAGES tag in the INCAR file.\n")
             for i in range(n_images+2):
-                i_dir = '0'+str(i) if i < 10 else str(i)
+                i_dir = neb_dir_name(i)
                 poscar = os.path.join(i_dir, "POSCAR")
                 curr_structure = ase.io.read(poscar)
                 self.images.append(curr_structure)
@@ -112,3 +116,10 @@ class NEBJob(Job):
             # if self.get_fmax(self.curr_structure)<max_force:
             #     finished = True
         # self.create_xdatcar()
+
+def neb_dir_name(i:int) -> str:
+    """
+    Convert image number to directory name for NEB calculations
+    (e.g. 0 -> 00, 1 -> 01, ..., 10 -> 10)
+    """
+    return str(i) if i > 9 else "0" + str(i)
