@@ -7,6 +7,7 @@ import ase
 from ase.mep import NEB
 from ase.optimize.optimize import Optimizer, OptimizableAtoms
 from vasp_emu.job.job import Job
+from ase.io import write
 
 def opt_log(self, forces=None) -> str:
     """
