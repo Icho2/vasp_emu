@@ -55,14 +55,9 @@ class NEBJob(Job):
         # make band
         n_images = self.job_params['num_img']
         self.images = []
-        interpolate = False if self.structures["final"] is None else True
-        if interpolate:
-            # final image was provided; construct intermediates now
-            self.images = [self.structures["initial"]]
-            for _ in range(n_images):
-                self.images.append(self.structures["initial"].copy())
-            self.images.append(self.structures["final"])
-        else:
+        self.nebmade = True if self.structures["final"] is None else False
+
+        if self.nebmade:
             # assume nebmake was already run; 00, 01, ... directories exist
             # the directory n_images+2 shouldn't exist
             if os.path.exists(neb_dir_name(n_images+2)):
@@ -73,16 +68,23 @@ class NEBJob(Job):
                 poscar = os.path.join(i_dir, "POSCAR")
                 curr_structure = ase.io.read(poscar)
                 self.images.append(curr_structure)
+        else:
+            # final image was provided; construct intermediates now
+            self.images = [self.structures["initial"]]
+            for _ in range(n_images):
+                self.images.append(self.structures["initial"].copy())
+            self.images.append(self.structures["final"])
+
+        self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
+        if not self.nebmade:
+            self.neb.interpolate(apply_constraint=True)
 
         if self.logger is not None:
             for i, atoms in enumerate(self.images):
                 self.logger.info(f"Image {i}:")
                 for j, atom in enumerate(atoms):
                     self.logger.info(f"Atom {j}: {atom.symbol}, Position: {atom.position}")
-        self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
 
-        if interpolate:
-            self.neb.interpolate(apply_constraint=True)
         self.set_dynamics()
 
     def set_dynamics(self) -> None:
@@ -110,6 +112,14 @@ class NEBJob(Job):
         while not finished:
             self.dynamics.run(fmax=max_force,steps=1)
             steps += 1
+
+            # write CONTCAR to image directories
+            if self.nebmade:
+                for i, image in enumerate(self.images):
+                    i_dir = neb_dir_name(i)
+                    contcar = os.path.join(i_dir, "CONTCAR")
+                    write(contcar, image, append=False)
+
             if steps == max_steps:
                 if self.logger is not None:
                     self.logger.info('Reached NSW')
