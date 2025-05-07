@@ -171,8 +171,6 @@ class Emulator():
         job_params = {key: self.params[key] for key in ["max_steps","fmax"]}
 
         if self.config['ichain'] == 0:
-            self.user_settings["initial_image_loc"] = "initial.traj"
-            self.user_settings["final_image_loc"] = "final.traj"
             job_params["num_img"] = self.params["num_img"]
             self.job = NEBJob(
                         init_struct=ase.io.read(self.user_settings["initial_image_loc"]),

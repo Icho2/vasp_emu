@@ -1,8 +1,9 @@
 """Modules"""
-import sys
+import sys, os
 import time
 from math import sqrt
 
+import ase
 from ase.mep import NEB
 from ase.optimize.optimize import Optimizer, OptimizableAtoms
 from vasp_emu.job.job import Job
@@ -49,18 +50,35 @@ class NEBJob(Job):
         """
         super().__init__(**kwargs)
         self.job_name = "nudged-elastic-band"
-        self.images = [self.structures["initial"]]
-        self.images.extend([self.structures["initial"].copy()]*self.job_params['num_img'])
-        self.images.extend([self.structures["final"]])
+
+        # make band
+        n_images = self.job_params['num_img']
+        self.images = []
+        interpolate = False if self.structures["final"] is None else True
+        if interpolate:
+            # final image was provided; construct intermediates now
+            self.images = [self.structures["initial"]]
+            for _ in range(n_images):
+                self.images.append(self.structures["initial"].copy())
+            self.images.append(self.structures["final"])
+        else:
+            # assume nebmake was already run; 00, 01, ... directories exist
+            for i in range(n_images+2):
+                i_dir = '0'+str(i) if i < 10 else str(i)
+                poscar = os.path.join(i_dir, "POSCAR")
+                curr_structure = ase.io.read(poscar)
+                self.images.append(curr_structure)
+
         if self.logger is not None:
             for i, atoms in enumerate(self.images):
                 self.logger.info(f"Image {i}:")
                 for j, atom in enumerate(atoms):
                     self.logger.info(f"Atom {j}: {atom.symbol}, Position: {atom.position}")
         self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
-        self.neb.interpolate(apply_constraint=True)
-        self.set_dynamics()
 
+        if interpolate:
+            self.neb.interpolate(apply_constraint=True)
+        self.set_dynamics()
 
     def set_dynamics(self) -> None:
         """
