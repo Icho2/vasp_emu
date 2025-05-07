@@ -7,6 +7,7 @@ from ase.mep import NEB
 from ase.optimize.optimize import Optimizer
 
 from vasp_emu.job.job import Job
+from ase.io import write
 
 def opt_log(self, forces=None) -> str:
     """
@@ -54,9 +55,9 @@ class NEBJob(Job):
         self.images.extend([self.structures["initial"].copy()]*self.job_params['num_img'])
         self.images.extend([self.structures["final"]])
         # Sort atoms by symbols and positions
-        for image in self.images:
-            image.arrays['positions'] = image.arrays['positions'][image.arrays['numbers'].argsort()]
-            image.arrays['numbers'] = image.arrays['numbers'][image.arrays['numbers'].argsort()]
+        #for image in self.images:
+            #image.arrays['positions'] = image.arrays['positions'][image.arrays['numbers'].argsort()]
+            #image.arrays['numbers'] = image.arrays['numbers'][image.arrays['numbers'].argsort()]
         if self.logger is not None:
             for i, atoms in enumerate(self.images):
                 self.logger.info(f"Image {i}:")
@@ -64,7 +65,6 @@ class NEBJob(Job):
                     self.logger.info(f"Atom {j}: {atom.symbol}, Position: {atom.position}")
         self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
         self.neb.interpolate(apply_constraint=True)
-
 
     def set_dynamics(self, name) -> None:
         """
