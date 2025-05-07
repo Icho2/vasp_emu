@@ -112,10 +112,11 @@ class NEBJob(Job):
         while not finished:
             self.dynamics.run(fmax=max_force,steps=1)
             steps += 1
+            finished = self.dynamics.converged()
 
             # write CONTCAR to image directories
             if self.nebmade:
-                for i, image in enumerate(self.images):
+                for i, image in enumerate(self.images[1:-1], start=1):
                     i_dir = neb_dir_name(i)
                     contcar = os.path.join(i_dir, "CONTCAR")
                     write(contcar, image, append=False)
