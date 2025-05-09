@@ -1,0 +1,17 @@
+#INCAR created by Atomic Simulation Environment
+ EDIFF = 1.00e-03
+ ALGO = VeryFast
+ PREC = Normal
+ ISMEAR = 1
+ ISPIN = 1
+ ISYM = 0
+ NELM = 100
+ LREAL = .FALSE.
+ EDIFFG =-0.02
+ IBRION =2
+ POTIM =0
+ IOPT = 1
+ NSW =300
+ IMAGES=5
+ ICHAIN = 0
+ LCLIMB=TRUE

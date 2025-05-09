@@ -1,0 +1,81 @@
+ vasp.6.4.0 14Feb23 (build Apr 12 2023 08:48:13) complex                        
+  
+ POSCAR found type information on POSCAR Ag
+ 03/POSCAR found :  1 types and      73 ions
+ Reading from existing POTCAR
+ scaLAPACK will be used
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     For optimal performance we recommend to set                             |
+|       NCORE = 2 up to number-of-cores-per-socket                            |
+|     NCORE specifies how many cores store one orbital (NPAR=cpu/NCORE).      |
+|     This setting can greatly improve the performance of VASP for DFT.       |
+|     The default, NCORE=1 might be grossly inefficient on modern             |
+|     multi-core architectures or massively parallel machines. Do your        |
+|     own testing! More info at https://www.vasp.at/wiki/index.php/NCORE      |
+|     Unfortunately you need to use the default for GW and RPA                |
+|     calculations (for HF NCORE is supported but not extensively tested      |
+|     yet).                                                                   |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ Reading from existing POTCAR
+ -----------------------------------------------------------------------------
+|                                                                             |
+|               ----> ADVICE to this user running VASP <----                  |
+|                                                                             |
+|     You have a (more or less) 'large supercell' and for larger cells it     |
+|     might be more efficient to use real-space projection operators.         |
+|     Therefore, try LREAL= Auto in the INCAR file.                           |
+|     Mind: For very accurate calculation, you might also keep the            |
+|     reciprocal projection scheme (i.e. LREAL=.FALSE.).                      |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ LDA part: xc-table for Ceperly-Alder, standard interpolation
+ POSCAR found type information on POSCAR Ag
+ 00/POSCAR found :  1 types and      73 ions
+ POSCAR found type information on POSCAR Ag
+ 06/POSCAR found :  1 types and      73 ions
+ Jacobian:    30.1989963495039     
+ POSCAR found type information on POSCAR Ag
+ 00/POSCAR found :  1 types and      73 ions
+ POSCAR found type information on POSCAR Ag
+ 06/POSCAR found :  1 types and      73 ions
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ WARNING: random wavefunctions but no delay for mixing, default for NELMDL
+ -----------------------------------------------------------------------------
+|                                                                             |
+|     EEEEEEE  RRRRRR   RRRRRR   OOOOOOO  RRRRRR      ###     ###     ###     |
+|     E        R     R  R     R  O     O  R     R     ###     ###     ###     |
+|     E        R     R  R     R  O     O  R     R     ###     ###     ###     |
+|     EEEEE    RRRRRR   RRRRRR   O     O  RRRRRR       #       #       #      |
+|     E        R   R    R   R    O     O  R   R                               |
+|     E        R    R   R    R   O     O  R    R      ###     ###     ###     |
+|     EEEEEEE  R     R  R     R  OOOOOOO  R     R     ###     ###     ###     |
+|                                                                             |
+|     Orbital orthonormalization failed in the inversion of matrix            |
+|     LAPACK: Routine ZPOTRF failed! kpoint: 1 spin: 1                        |
+|                                                                             |
+|     Possible solutions for this issue are:                                  |
+|     - Please check whether the atoms are too close to each other.           |
+|     - Decreasing POTIM might help during relaxations or MDs.                |
+|     - Deleting CHGCAR or WAVECAR if incompatible with the structure.        |
+|     - Try calculating without symmetrizing (ISYM = 0 or ISYM = -1).         |
+|     - As last resort: using a different PAW for some of the atoms.          |
+|                                                                             |
+|       ---->  I REFUSE TO CONTINUE WITH THIS SICK JOB ... BYE!!! <----       |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
