@@ -70,17 +70,15 @@ class OptJob(Job):
         finished = False
         while not finished:
             self.dynamics.run(fmax=max_force,steps=1)
-            if self.logger is not None:
-                self.logger.debug(f'U: {curr_structure.get_potential_energy()}   ' + \
-                                    f'fmax: {self.get_fmax(curr_structure)}')
+            self.logger.info(f'U: {curr_structure.get_potential_energy()}   ' + \
+                                f'fmax: {self.get_fmax(curr_structure)}')
             # CONTCAR should be written after each step, used to restart jobs
             ase.io.write('CONTCAR',curr_structure,format='vasp')
             steps += 1
             if self.get_fmax(curr_structure) < max_force:
                 finished = True
             elif steps == max_steps:
-                if self.logger is not None:
-                    self.logger.info('Reached NSW')
+                self.logger.info('Reached NSW')
                 finished = True
         self.create_xdatcar()
         self.structures['final'] = curr_structure

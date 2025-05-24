@@ -14,7 +14,7 @@ from vasp_emu.opt.sdlbfgs import SDLBFGS
 
 class Job(ABC):
     """ 
-    A class that represents a Job that can be run by the VASP Emulaor
+    A class that represents a Job that can be run by the VASP Emulator
     
     Attributes:
         job_name (str) : name of the job, used for printing
@@ -27,7 +27,7 @@ class Job(ABC):
         potential : The potential used to run the dynamics
     """
     def __init__(self, init_struct:ase.Atoms, dyn_name, dyn_args:dict, job_params:dict,
-                        final_struct:ase.Atoms = None, logger:logging.Logger = None):
+                        final_struct:ase.Atoms = None):
         """
         Construct a Job object
         
@@ -37,7 +37,6 @@ class Job(ABC):
             dyn_args (dict): The arguments needed to initializee the dynamics/optimizer
             job_params (dict): The arguments needed to run the job (e.g. max_steps, fmax)
             final_struct (dict): an Atoms object that contains the final structure (OPTIONAL)
-            logger (logging.logger): A logger to record job information (OPTIONAL)
         """
         # Attributes to be set later
         self.job_name = ""
@@ -45,7 +44,7 @@ class Job(ABC):
         self.dyn_logger = None
         # Other Attributes that
         self.structures = { "initial": init_struct, "final": final_struct}
-        self.logger = logger
+        self.logger = Job._create_outcar_logger()
         self.dyn_args = dyn_args
         self.job_params = job_params
         self.set_optimizer(dyn_name)
@@ -90,6 +89,18 @@ class Job(ABC):
         file_handler = logging.FileHandler(name)
         file_handler.setFormatter(logging.Formatter('%(message)s'))
         self.dyn_logger.addHandler(file_handler)
+
+    @staticmethod
+    def _create_outcar_logger(dir: str = '.') -> logging.Logger:
+        logger = logging.getLogger(dir + '/outcar')
+        # Prevent adding multiple handlers if the logger instance is somehow reused by name
+        if not logger.handlers:
+            logger.propagate = False 
+            logger.setLevel(logging.INFO)
+            file_handler = logging.FileHandler(os.path.join(dir, "OUTCAR"), mode='w') 
+            file_handler.setFormatter(logging.Formatter('%(message)s'))
+            logger.addHandler(file_handler)
+        return logger
 
     def set_potential(self, ptype:str, pname:str=None, seed:int=1234, use_cpu:bool=True) -> None:
         """

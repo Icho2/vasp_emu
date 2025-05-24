@@ -5,7 +5,7 @@ import time
 import logging
 
 import ase
-from vasp_emu.job.neb import NEBJob
+from vasp_emu.job.neb import NEBJob, neb_dir_name
 from vasp_emu.job.dynamics import MDJob
 from vasp_emu.job.dimer import DimerJob
 from vasp_emu.job.optimization import OptJob
@@ -19,7 +19,6 @@ class Emulator():
     Attributes:
         job (vasp_emu.job): an instance of the Job class
         oszicar (logging.Logger) : Logger that records all standard output
-        outcar (logging.Logger) : Logger that records job-specific information in a file
         user_settings (dict) : dictionary of settings passed from the command line
         config (dict) : a dictionary of settings read from the INCAR file
         params (dict) : a dictionary that maps INCAR settings to function arguments
@@ -41,7 +40,7 @@ class Emulator():
         # Attributes that will be initialized in another function
         self.job = None
         self.oszicar:logging.Logger = None # Akksay vetoed
-        self.outcar:logging.Logger = None
+        # OUTCAR will be set up in each job
         self.dyn_flags = {}
         # Settings passed from the command line
         self.user_settings = {
@@ -88,7 +87,7 @@ class Emulator():
             print(f"Specified INCAR {''.join(os.path.abspath(filename))} does not exist",sys.stderr)
             sys.exit(2)
         # Only if we have successfully parsed the INCAR do we set up the logger
-        self.setup_logger()
+        self.setup_oszicar()
         self.oszicar.info("=======================================================")
         self.oszicar.info("Starting a VASP_EMU job at %s", time.strftime("%Y-%m-%d %X %Z"))
         self.oszicar.info("=======================================================")
@@ -98,8 +97,8 @@ class Emulator():
         config.initialize(filename)
         return config.config
 
-    def setup_logger(self) -> None:
-        """Sets up the OUTCAR and OSZICAR files"""
+    def setup_oszicar(self) -> None:
+        """Sets up OSZICAR file. OUTCAR will be set up in each job"""
         # root logger so it will take anything that's outputted
         # NOTE: Akksay says to remove this one
         self.oszicar = logging.getLogger()
@@ -112,13 +111,6 @@ class Emulator():
         file_handler1.setLevel(logging.DEBUG)
         self.oszicar.addHandler(file_handler1)
         get_sys_info(self.oszicar)
-
-        self.outcar = logging.getLogger('outcar')
-        self.outcar.propagate = False # prevent printing to stdout
-        self.outcar.setLevel(logging.DEBUG)
-        file_handler1 = logging.FileHandler("OUTCAR")
-        file_handler1.setFormatter(logging.Formatter('%(message)s'))
-        self.outcar.addHandler(file_handler1)
 
     def verify_dynamics(self,iopt:int,ibrion:int) -> str:
         """
@@ -184,7 +176,7 @@ class Emulator():
                         dyn_name = self.dynamics_name,
                         dyn_args = self.dyn_flags,
                         job_params = job_params,
-                        logger=self.outcar)
+                        )
         elif self.config['ichain'] == 2:
             if (self.config['ibrion'] == 3) and (self.config['potim'] == 0):
                 self.job = DimerJob(
@@ -192,7 +184,7 @@ class Emulator():
                         dyn_name = self.dynamics_name,
                         dyn_args = self.dyn_flags,
                         job_params = job_params,
-                        logger=self.outcar)
+                        )
             else:
                 raise AttributeError("To run dimer, INCAR must include IBRION=3 and POTIM=0")
         elif self.config["ibrion"] == 0:
@@ -200,13 +192,13 @@ class Emulator():
                        dyn_name = self.dynamics_name,
                        dyn_args = self.dyn_flags,
                        job_params = job_params,
-                       logger=self.outcar)
+                       )
         else:
             self.job = OptJob(init_struct=ase.io.read(self.user_settings["initial_image_loc"]),
                        dyn_name = self.dynamics_name,
                        dyn_args = self.dyn_flags,
                        job_params = job_params,
-                       logger=self.outcar)
+                       )
 
         self.job.set_potential(ptype=self.config["potential"], pname=self.OCP_potential())
         self.job.calculate()
@@ -216,6 +208,16 @@ class Emulator():
         for file in ["CONTCAR","OSZICAR","OUTCAR","XDATCAR","dynamics.log","dynamics.traj"]:
             if os.path.isfile(file):
                 os.remove(file)
+
+        # remove neb files if they exist
+        for i in range(1000):
+            dir_name = neb_dir_name(i)
+            if os.path.isdir(dir_name):
+                for file in ["CONTCAR", "OUTCAR"]:
+                    if os.path.isfile(os.path.join(dir_name, file)):
+                        os.remove(os.path.join(dir_name, file))
+            else:
+                break
     
     def OCP_potential(self):
         if self.config['potential'] != 'OCP':

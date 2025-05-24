@@ -63,11 +63,13 @@ class NEBJob(Job):
             if os.path.exists(neb_dir_name(n_images+2)):
                 raise ValueError(f"Directory {neb_dir_name(n_images+2)} exists.\n"
                                   "Double check the IMAGES tag in the INCAR file.\n")
+            self.loggers = []  # list of outcar loggers for each image
             for i in range(n_images+2):
                 i_dir = neb_dir_name(i)
                 poscar = os.path.join(i_dir, "POSCAR")
                 curr_structure = ase.io.read(poscar)
                 self.images.append(curr_structure)
+                self.loggers.append(Job._create_outcar_logger(i_dir))
         else:
             # final image was provided; construct intermediates now
             self.images = [self.structures["initial"]]
@@ -78,8 +80,6 @@ class NEBJob(Job):
         self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
         if not self.nebmade:
             self.neb.interpolate(apply_constraint=True)
-
-        if self.logger is not None:
             for i, atoms in enumerate(self.images):
                 self.logger.info(f"Image {i}:")
                 for j, atom in enumerate(atoms):
@@ -120,6 +120,8 @@ class NEBJob(Job):
                     i_dir = neb_dir_name(i)
                     contcar = os.path.join(i_dir, "CONTCAR")
                     write(contcar, image, append=False)
+                    # write the log file
+                    self.loggers[i].info(f"Image {i} step {steps}")
 
             if steps == max_steps:
                 if self.logger is not None:

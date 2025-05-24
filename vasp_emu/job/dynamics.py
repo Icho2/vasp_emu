@@ -81,15 +81,13 @@ class MDJob(Job):
         finished = False
         while not finished:
             self.dynamics.run(steps=1)
-            if self.logger is not None:
-                self.logger.debug(f'U: {curr_structure.get_potential_energy()}   ' + \
-                                    f'fmax: {self.get_fmax(curr_structure)}')
+            self.logger.info(f'U: {curr_structure.get_potential_energy()}   ' + \
+                                f'fmax: {self.get_fmax(curr_structure)}')
             # CONTCAR should be written after each step, used to restart jobs
             ase.io.write('CONTCAR',curr_structure,format='vasp')
             steps += 1
             if steps == max_steps:
-                if self.logger is not None:
-                    self.logger.info('Reached NSW')
+                self.logger.info('Reached NSW')
                 finished = True
         self.create_xdatcar(False)
         self.structures['final'] = curr_structure

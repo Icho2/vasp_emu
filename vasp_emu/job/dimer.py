@@ -71,16 +71,14 @@ class DimerJob(Job):
             with MinModeTranslate(d_atoms, trajectory='dynamics.traj') as dim_rlx:
                 while not finished:
                     dim_rlx.run(fmax=max_force,steps=1)
-                    if self.logger is not None:
-                        self.logger.debug(f'U: {curr_structure.get_potential_energy()}' + \
-                                            f'   fmax: {self.get_fmax(curr_structure)}')
+                    self.logger.debug(f'U: {curr_structure.get_potential_energy()}' + \
+                                        f'   fmax: {self.get_fmax(curr_structure)}')
                     # CONTCAR should be written after each step, used to restart jobs
                     ase.io.write('CONTCAR',curr_structure,format='vasp')
                     steps+=1
                     if self.get_fmax(curr_structure) < max_force:
                         finished = True
                     elif steps == max_steps:
-                        if self.logger is not None:
-                            self.logger.info('Reached NSW')
+                        self.logger.info('Reached NSW')
                         finished  = True
         # self.create_xdatcar()
