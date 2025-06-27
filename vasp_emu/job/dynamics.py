@@ -72,7 +72,7 @@ class MDJob(Job):
         """
         Perform the MD simulation
         """
-        curr_structure = self.structures["initial"]
+        curr_structure = self.poscar
         max_steps = self.job_params["max_steps"]
         curr_structure.calc = self.potential
         MaxwellBoltzmannDistribution(curr_structure,temperature_K=300)
@@ -90,4 +90,3 @@ class MDJob(Job):
                 self.logger.info('Reached NSW')
                 finished = True
         self.create_xdatcar(False)
-        self.structures['final'] = curr_structure

@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 import ase
 from ase.calculators.emt import EMT
 from ase.calculators.vasp import Vasp
+import ase.io
 from ase.md.verlet import VelocityVerlet
 from ase.optimize import BFGS, FIRE, MDMin
 from ase.optimize.sciopt import SciPyFminCG
@@ -18,7 +19,7 @@ class Job(ABC):
     
     Attributes:
         job_name (str) : name of the job, used for printing
-        structures (dict) : dictionary of the original structures given to the job
+        poscar (ase.Atoms) : the initial structure of the job
         job_params (dict): parameters needed for the job to run (e.g. max_steps)
         dyn_args (dict): arguments that need to be passed to the dynamics/optimizer object
         dynamics (Dynamics): the actual Dynamics/optimizer object used to guide the job
@@ -26,25 +27,25 @@ class Job(ABC):
         logger(logging.Logger) : logger that is used for job informatoin
         potential : The potential used to run the dynamics
     """
-    def __init__(self, init_struct:ase.Atoms, dyn_name, dyn_args:dict, job_params:dict,
-                        final_struct:ase.Atoms = None):
+    def __init__(self, structure:ase.Atoms, dyn_name:str, dyn_args:dict, job_params:dict,
+                 logger:logging.Logger=None) -> None:
         """
         Construct a Job object
         
         Arguments:
-            init_struct (dict): an Atoms object that contains the starting structure
+            structure (ase.Atoms): The initial structure of the job
             dyn_name (str): A string that indicates what dynamics/optimizer to use
             dyn_args (dict): The arguments needed to initializee the dynamics/optimizer
             job_params (dict): The arguments needed to run the job (e.g. max_steps, fmax)
-            final_struct (dict): an Atoms object that contains the final structure (OPTIONAL)
+            logger (logging.Logger): A logger object for the OUTCAR file
         """
         # Attributes to be set later
         self.job_name = ""
+        self.poscar = structure
         self.potential = None
         self.dyn_logger = None
         # Other Attributes that
-        self.structures = { "initial": init_struct, "final": final_struct}
-        self.logger = Job._create_outcar_logger()
+        self.logger = logger
         self.dyn_args = dyn_args
         self.job_params = job_params
         self.set_optimizer(dyn_name)
@@ -54,7 +55,7 @@ class Job(ABC):
         """ An abstract method that must be defined by each instance of the Job class"""
     
     def set_dynamics(self) -> None:
-        curr_structure = self.structures["initial"]
+        curr_structure = self.poscar
         self.dynamics = self.optimizer(curr_structure,**self.dyn_args)
 
     def set_optimizer(self, name:str) -> None:
@@ -121,9 +122,10 @@ class Job(ABC):
                         cpu=use_cpu,
             )
         elif ptype == "VASP":
-            self.potential = Vasp(atoms=self.structures['initial'],
-                        command='mpirun vasp_std',
-                    )
+            self.potential = Vasp(
+                        #command='mpirun vasp_std',
+                    )  # TODO: need to figure out a way to link MPI and SLURM here
+            self.potential.read_incar("INCAR")
         elif ptype == 'PYAMFF':
             try:
                 from pyamff.ase_calc import aseCalc

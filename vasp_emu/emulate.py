@@ -5,7 +5,8 @@ import time
 import logging
 
 import ase
-from vasp_emu.job.neb import NEBJob, neb_dir_name
+from vasp_emu.job.job import Job
+from vasp_emu.job.neb import NEBJob
 from vasp_emu.job.dynamics import MDJob
 from vasp_emu.job.dimer import DimerJob
 from vasp_emu.job.optimization import OptJob
@@ -26,7 +27,7 @@ class Emulator():
         dyn_flags (dict): a dictionary that contains only the INCAR settings that are needed
                                 by the specific dynamics object being used
     """
-    def __init__(self,settings:dict=None) -> None:
+    def __init__(self, settings:dict=None) -> None:
         """
         Construct an Emulator object
         
@@ -42,11 +43,6 @@ class Emulator():
         self.oszicar:logging.Logger = None # Akksay vetoed
         # OUTCAR will be set up in each job
         self.dyn_flags = {}
-        # Settings passed from the command line
-        self.user_settings = {
-                                "initial_image_loc": settings.initial_image,
-                                "final_image_loc": settings.final_image
-                            }
         # Settings passed from the incar
         self.config = self.read_incar(settings.INCAR)
 
@@ -164,40 +160,44 @@ class Emulator():
 
         if self.config['ichain'] == 0:  # NEB
             job_params["num_img"] = self.params["num_img"]
-            if self.user_settings["final_image_loc"] is None:  # assume that the user has run nebmake
-                init_struct = None  # undo default value of --initial-image
-                final_struct = None
-            else:
-                init_struct = ase.io.read(self.user_settings["initial_image_loc"])
-                final_struct = ase.io.read(self.user_settings["final_image_loc"])
             self.job = NEBJob(
-                        init_struct=init_struct,
-                        final_struct=final_struct,
+                        structure = None,
                         dyn_name = self.dynamics_name,
                         dyn_args = self.dyn_flags,
                         job_params = job_params,
                         )
         elif self.config['ichain'] == 2:
             if (self.config['ibrion'] == 3) and (self.config['potim'] == 0):
+                structure = ase.io.read("POSCAR")
+                logger = Job._create_outcar_logger()
                 self.job = DimerJob(
-                        init_struct=ase.io.read(self.user_settings["initial_image_loc"]),
+                        structure = structure,
                         dyn_name = self.dynamics_name,
                         dyn_args = self.dyn_flags,
                         job_params = job_params,
+                        logger = logger,
                         )
             else:
                 raise AttributeError("To run dimer, INCAR must include IBRION=3 and POTIM=0")
         elif self.config["ibrion"] == 0:
-            self.job = MDJob(init_struct=ase.io.read(self.user_settings["initial_image_loc"]),
+            structure = ase.io.read("POSCAR")
+            logger = Job._create_outcar_logger()
+            self.job = MDJob(
+                       structure = structure,
                        dyn_name = self.dynamics_name,
                        dyn_args = self.dyn_flags,
                        job_params = job_params,
+                       logger = logger,
                        )
         else:
-            self.job = OptJob(init_struct=ase.io.read(self.user_settings["initial_image_loc"]),
+            structure = ase.io.read("POSCAR")
+            logger = Job._create_outcar_logger()
+            self.job = OptJob(
+                       structure = structure,
                        dyn_name = self.dynamics_name,
                        dyn_args = self.dyn_flags,
                        job_params = job_params,
+                       logger = logger,
                        )
 
         self.job.set_potential(ptype=self.config["potential"], pname=self.OCP_potential())
@@ -210,8 +210,8 @@ class Emulator():
                 os.remove(file)
 
         # remove neb files if they exist
-        for i in range(1000):
-            dir_name = neb_dir_name(i)
+        for i in range(1000):  # assume no one in their right mind will use more than 1000 images
+            dir_name = NEBJob.neb_dir_name(i)
             if os.path.isdir(dir_name):
                 for file in ["CONTCAR", "OUTCAR"]:
                     if os.path.isfile(os.path.join(dir_name, file)):

@@ -10,12 +10,6 @@ def get_args():
                 prog="vasp_emu")
     parser.add_argument('INCAR',type=str,default='INCAR',nargs='?',
                         help='INCAR file with configuration settings (DEFAULT: INCAR)')
-    parser.add_argument("-i","--initial-image",type=str,default='POSCAR',nargs='?',
-                        help='File containing initial-image (DEFAULT: POSCAR)')
-    parser.add_argument("-f","--final-image",type=str,default=None,nargs='?',
-                        help='File containing final-image for NEB (DEFAULT: None)\n'
-                             'If not provided for NEB, vasp_emu will assume that `nebmake`'
-                             ' has been run on the working directory.')
     parser.add_argument("-R","--reset",action="store_true",
                         help='Reset your directory (DEFAULT: False)')
     return parser.parse_args()

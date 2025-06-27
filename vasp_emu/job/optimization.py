@@ -62,7 +62,7 @@ class OptJob(Job):
         """
         Perform the geometry optimization
         """
-        curr_structure = self.structures["initial"]
+        curr_structure = self.poscar
         max_force = self.job_params["fmax"]
         max_steps = self.job_params["max_steps"]
         curr_structure.calc = self.potential
@@ -81,4 +81,3 @@ class OptJob(Job):
                 self.logger.info('Reached NSW')
                 finished = True
         self.create_xdatcar()
-        self.structures['final'] = curr_structure

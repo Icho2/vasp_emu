@@ -49,11 +49,11 @@ class DimerJob(Job):
         """
         Perform the dimer calculation
         """
-        curr_structure = self.structures["initial"]
+        curr_structure = self.poscar
         mask = [atom.tag > 0 for atom in curr_structure]
         curr_structure.set_constraint(FixAtoms(mask=mask))
         curr_structure.calc = self.potential
-        curr_structure.get_potential_energy() #为什么?
+        curr_structure.get_potential_energy()
         max_force = self.job_params["fmax"]
         max_steps = self.job_params["max_steps"]
 

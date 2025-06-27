@@ -39,8 +39,12 @@ class NEBJob(Job):
     
     Attributes:
         job_name (str): name of the job
-        images (list of Atoms) : images that make up the band
+        images (list of Atoms): list of images in the NEB calculation
+                                     self.poscar is not used
+        loggers (list of OutcarLogger): list of loggers for each image
+                                        self.logger is not used
         neb (NEB) : NEB object to drive the dynamics
+        Please refer to the parent Job Class
     """
     def __init__(self,**kwargs):
         """
@@ -52,39 +56,23 @@ class NEBJob(Job):
         super().__init__(**kwargs)
         self.job_name = "nudged-elastic-band"
 
-        # make band
-        n_images = self.job_params['num_img']
+        # populate images (assume nebmake was already run by the user)
         self.images = []
-        self.nebmade = True if self.structures["final"] is None else False
-
-        if self.nebmade:
-            # assume nebmake was already run; 00, 01, ... directories exist
-            # the directory n_images+2 shouldn't exist
-            if os.path.exists(neb_dir_name(n_images+2)):
-                raise ValueError(f"Directory {neb_dir_name(n_images+2)} exists.\n"
-                                  "Double check the IMAGES tag in the INCAR file.\n")
-            self.loggers = []  # list of outcar loggers for each image
-            for i in range(n_images+2):
-                i_dir = neb_dir_name(i)
-                poscar = os.path.join(i_dir, "POSCAR")
-                curr_structure = ase.io.read(poscar)
-                self.images.append(curr_structure)
-                self.loggers.append(Job._create_outcar_logger(i_dir))
-        else:
-            # final image was provided; construct intermediates now
-            self.images = [self.structures["initial"]]
-            for _ in range(n_images):
-                self.images.append(self.structures["initial"].copy())
-            self.images.append(self.structures["final"])
+        n_images = self.job_params['num_img']
+        # the directory n_images+2 shouldn't exist
+        if os.path.exists(NEBJob.neb_dir_name(n_images+2)):
+            raise ValueError(f"Directory {NEBJob.neb_dir_name(n_images+2)} exists.\n"
+                                "Double check the IMAGES tag in the INCAR file.\n")
+        self.loggers = dict()  # dict of outcar loggers for each image
+        for i in range(n_images+2):
+            i_dir = NEBJob.neb_dir_name(i)
+            poscar = os.path.join(i_dir, "POSCAR")
+            curr_structure = ase.io.read(poscar)
+            self.images.append(curr_structure)
+            if i != 0 and i != n_images + 1:  # don't log the first and last images
+                self.loggers[i] = Job._create_outcar_logger(i_dir)
 
         self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
-        if not self.nebmade:
-            self.neb.interpolate(apply_constraint=True)
-            for i, atoms in enumerate(self.images):
-                self.logger.info(f"Image {i}:")
-                for j, atom in enumerate(atoms):
-                    self.logger.info(f"Atom {j}: {atom.symbol}, Position: {atom.position}")
-
         self.set_dynamics()
 
     def set_dynamics(self) -> None:
@@ -115,13 +103,12 @@ class NEBJob(Job):
             finished = self.dynamics.converged()
 
             # write CONTCAR to image directories
-            if self.nebmade:
-                for i, image in enumerate(self.images[1:-1], start=1):
-                    i_dir = neb_dir_name(i)
-                    contcar = os.path.join(i_dir, "CONTCAR")
-                    write(contcar, image, append=False)
-                    # write the log file
-                    self.loggers[i].info(f"Image {i} step {steps}")
+            for i, image in enumerate(self.images[1:-1], start=1):  # skip first and last images
+                i_dir = NEBJob.neb_dir_name(i)
+                contcar = os.path.join(i_dir, "CONTCAR")
+                write(contcar, image, append=False)
+                # write the log file
+                self.loggers[i].info(f"Image {i} step {steps}")
 
             if steps == max_steps:
                 if self.logger is not None:
@@ -131,9 +118,10 @@ class NEBJob(Job):
             #     finished = True
         # self.create_xdatcar()
 
-def neb_dir_name(i:int) -> str:
-    """
-    Convert image number to directory name for NEB calculations
-    (e.g. 0 -> 00, 1 -> 01, ..., 10 -> 10)
-    """
-    return str(i) if i > 9 else "0" + str(i)
+    @staticmethod
+    def neb_dir_name(i:int) -> str:
+        """
+        Convert image number to directory name for NEB calculations
+        (e.g. 0 -> 00, 1 -> 01, ..., 10 -> 10)
+        """
+        return str(i) if i > 9 else "0" + str(i)
