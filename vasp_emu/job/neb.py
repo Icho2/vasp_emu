@@ -111,8 +111,8 @@ class NEBJob(Job):
                 self.loggers[i].info(f"Image {i} step {steps}")
 
             if steps == max_steps:
-                if self.logger is not None:
-                    self.logger.info('Reached NSW')
+                for logger in self.loggers.values():
+                    logger.info(f"Reached NSW after {steps} steps")
                 finished = True
             # if self.get_fmax(self.curr_structure)<max_force:
             #     finished = True
