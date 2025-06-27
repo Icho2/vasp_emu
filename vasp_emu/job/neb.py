@@ -7,6 +7,7 @@ import ase
 from ase.mep import NEB
 from ase.optimize.optimize import Optimizer, OptimizableAtoms
 from vasp_emu.job.job import Job
+from vasp_emu.io.outcar import OutcarWriter
 from ase.io import write
 
 def opt_log(self, forces=None) -> str:
@@ -41,7 +42,7 @@ class NEBJob(Job):
         job_name (str): name of the job
         images (list of Atoms): list of images in the NEB calculation
                                      self.poscar is not used
-        loggers (list of OutcarLogger): list of loggers for each image
+        loggers (list of OutcarWriter): list of loggers for each image
                                         self.logger is not used
         neb (NEB) : NEB object to drive the dynamics
         Please refer to the parent Job Class
@@ -70,7 +71,7 @@ class NEBJob(Job):
             curr_structure = ase.io.read(poscar)
             self.images.append(curr_structure)
             if i != 0 and i != n_images + 1:  # don't log the first and last images
-                self.loggers[i] = Job._create_outcar_logger(i_dir)
+                self.loggers[i] = OutcarWriter(i_dir)
 
         self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
         self.set_dynamics()

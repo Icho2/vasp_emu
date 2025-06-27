@@ -91,18 +91,6 @@ class Job(ABC):
         file_handler.setFormatter(logging.Formatter('%(message)s'))
         self.dyn_logger.addHandler(file_handler)
 
-    @staticmethod
-    def _create_outcar_logger(dir: str = '.') -> logging.Logger:
-        logger = logging.getLogger(dir + '/outcar')
-        # Prevent adding multiple handlers if the logger instance is somehow reused by name
-        if not logger.handlers:
-            logger.propagate = False 
-            logger.setLevel(logging.INFO)
-            file_handler = logging.FileHandler(os.path.join(dir, "OUTCAR"), mode='w') 
-            file_handler.setFormatter(logging.Formatter('%(message)s'))
-            logger.addHandler(file_handler)
-        return logger
-
     def set_potential(self, ptype:str, pname:str=None, seed:int=1234, use_cpu:bool=True) -> None:
         """
         Set the potential that will be used to find energy and forces

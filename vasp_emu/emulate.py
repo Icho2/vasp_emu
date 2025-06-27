@@ -10,6 +10,7 @@ from vasp_emu.job.neb import NEBJob
 from vasp_emu.job.dynamics import MDJob
 from vasp_emu.job.dimer import DimerJob
 from vasp_emu.job.optimization import OptJob
+from vasp_emu.io.outcar import OutcarWriter
 from vasp_emu.utils.utils import get_sys_info
 from vasp_emu.utils.config import ConfigClass
 
@@ -169,7 +170,7 @@ class Emulator():
         elif self.config['ichain'] == 2:
             if (self.config['ibrion'] == 3) and (self.config['potim'] == 0):
                 structure = ase.io.read("POSCAR")
-                logger = Job._create_outcar_logger()
+                logger = OutcarWriter()
                 self.job = DimerJob(
                         structure = structure,
                         dyn_name = self.dynamics_name,
@@ -181,7 +182,7 @@ class Emulator():
                 raise AttributeError("To run dimer, INCAR must include IBRION=3 and POTIM=0")
         elif self.config["ibrion"] == 0:
             structure = ase.io.read("POSCAR")
-            logger = Job._create_outcar_logger()
+            logger = OutcarWriter()
             self.job = MDJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
@@ -191,7 +192,7 @@ class Emulator():
                        )
         else:
             structure = ase.io.read("POSCAR")
-            logger = Job._create_outcar_logger()
+            logger = OutcarWriter()
             self.job = OptJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
