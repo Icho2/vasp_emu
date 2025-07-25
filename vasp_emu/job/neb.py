@@ -96,11 +96,10 @@ class NEBJob(Job):
         max_force = self.job_params["fmax"]
         max_steps = self.job_params["max_steps"]
 
-        steps = 0
+        step = 1  # VASP ionic steps start at 1
         finished = False
         while not finished:
             self.dynamics.run(fmax=max_force,steps=1)
-            steps += 1
             finished = self.dynamics.converged()
 
             # write CONTCAR to image directories
@@ -108,15 +107,14 @@ class NEBJob(Job):
                 i_dir = NEBJob.neb_dir_name(i)
                 contcar = os.path.join(i_dir, "CONTCAR")
                 write(contcar, image, append=False)
-                # write the log file
-                self.loggers[i].info(f"Image {i} step {steps}")
+                # write OUTCAR
+                self.loggers[i].write(image, step)
 
-            if steps == max_steps:
-                for logger in self.loggers.values():
-                    logger.info(f"Reached NSW after {steps} steps")
+            if step == max_steps:
                 finished = True
             # if self.get_fmax(self.curr_structure)<max_force:
             #     finished = True
+            step += 1
         # self.create_xdatcar()
 
     @staticmethod
