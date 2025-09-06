@@ -25,21 +25,28 @@ class OutcarWriter(Logger):
             file_handler.setFormatter(Formatter('%(message)s'))
             self.addHandler(file_handler)
 
-
-    def write(self, atoms:Atoms, step: int) -> None:
+    
+    def write_header(self, atoms: Atoms) -> None:
         """
-        A method that calls all other write methods below
+        Write the header for the OUTCAR file.
+        """
+        self.info(f"number of ions     NIONS ={len(atoms):7d}\n")
+
+
+    def write_step(self, atoms: Atoms, step: int) -> None:
+        """
+        A method that calls all other write methods that should be called at each ionic step.
         
         Args:
             atoms (Atoms): The Atoms object to write to OUTCAR.
             step (int): The current ionic step number.
         """
-        self.write_ionic_step_header(step)
+        self.write_ionic_header(step)
         self.write_pos_forces(atoms.get_positions(), atoms.get_forces())
         self.write_energy(atoms.get_potential_energy())
 
 
-    def write_ionic_step_header(self, step: int) -> None:
+    def write_ionic_header(self, step: int) -> None:
         """
         Write the header for an ionic step in the OUTCAR file.
 

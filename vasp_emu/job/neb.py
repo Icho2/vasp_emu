@@ -96,6 +96,10 @@ class NEBJob(Job):
         max_force = self.job_params["fmax"]
         max_steps = self.job_params["max_steps"]
 
+        # write OUTCAR headers
+        for i, image in enumerate(self.images[1:-1], start=1):  # skip first and last images
+            self.loggers[i].write_header(image)
+
         step = 1  # VASP ionic steps start at 1
         finished = False
         while not finished:
@@ -108,7 +112,7 @@ class NEBJob(Job):
                 contcar = os.path.join(i_dir, "CONTCAR")
                 write(contcar, image, append=False)
                 # write OUTCAR
-                self.loggers[i].write(image, step)
+                self.loggers[i].write_step(image, step)
 
             if step == max_steps:
                 finished = True
