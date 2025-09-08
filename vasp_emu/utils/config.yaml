@@ -233,16 +233,22 @@ options:
   
   # Flag that specifies the types of potentials that can be used
   POTENTIAL:
-    default: OCP
+    default: UMA
     kind: string
     values:
-      - OCP
+      - UMA
       - PYAMFF
       - EMT
 
-  OCPPOT:
-    default: 'EquiformerV2-31M-S2EF-OC20-All+MD'
+  UMAPOT:
+    default: 'omat'
     kind: string
+    values:
+      - oc20
+      - omat
+      - omol
+      - odac
+      - omc
      
   # VASP FLAG: IF IBRION=0, gives the timestep (in femtoseconds) for the MD run
   # IF IBRION=1,2,3, gives the scaling factor for the step widths (not yet implemented)

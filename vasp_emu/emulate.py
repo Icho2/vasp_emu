@@ -201,7 +201,7 @@ class Emulator():
                        logger = logger,
                        )
 
-        self.job.set_potential(ptype=self.config["potential"], pname=self.OCP_potential())
+        self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential())
         self.job.calculate()
 
     def clean(self) -> None:
@@ -220,8 +220,8 @@ class Emulator():
             else:
                 break
     
-    def OCP_potential(self):
-        if self.config['potential'] != 'OCP':
+    def UMA_potential(self):
+        if self.config['potential'] != 'UMA':
             return None
 
-        return self.config['ocppot']
+        return self.config['umapot']

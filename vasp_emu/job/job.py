@@ -96,19 +96,16 @@ class Job(ABC):
         Set the potential that will be used to find energy and forces
         
         Arguments:
-                ptype (str): The type of potential to be used (e.g. OCP, PYAMFF)
-                pname (str): The name of a specific model to be used when using OCP
+                ptype (str): The type of potential to be used (e.g. UMA, PYAMFF)
+                pname (str): The name of a specific model to be used when using UMA
                 seed (int): Used for reproducability (default 1234)
                 use_cpu (bool): whether to run the calculator on cpu (default True)
         """
-        if ptype == "OCP":
-            from fairchem.core import OCPCalculator
-            self.potential = OCPCalculator(
-                        model_name='EquiformerV2-31M-S2EF-OC20-All+MD' if pname is None else pname,
-                        local_cache="pretrained_models",
-                        seed=seed,
-                        cpu=use_cpu,
-            )
+        if ptype == "UMA":
+            from fairchem.core import pretrained_mlip, FAIRChemCalculator
+            predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cuda")
+            self.potential = FAIRChemCalculator(predictor, task_name="omat")
+
         elif ptype == "VASP":
             self.potential = Vasp(
                         #command='mpirun vasp_std',
