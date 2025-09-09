@@ -104,7 +104,7 @@ class Job(ABC):
         if ptype == "UMA":
             from fairchem.core import pretrained_mlip, FAIRChemCalculator
             predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cuda")
-            self.potential = FAIRChemCalculator(predictor, task_name="omat")
+            self.potential = FAIRChemCalculator(predictor, task_name="odac")
 
         elif ptype == "VASP":
             self.potential = Vasp(

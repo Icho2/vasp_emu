@@ -68,10 +68,11 @@ class OptJob(Job):
         curr_structure.calc = self.potential
         steps = 0
         finished = False
+        self.logger.info('CHAIN: Read ICHAIN        0')
         while not finished:
             self.dynamics.run(fmax=max_force,steps=1)
-            self.logger.info(f'U: {curr_structure.get_potential_energy()}   ' + \
-                                f'fmax: {self.get_fmax(curr_structure)}')
+            self.logger.info(f'energy  without entropy=     {curr_structure.get_potential_energy()} energy(sigma->0) =    {curr_structure.get_potential_energy()}')
+            self.logger.info(f'FORCES: max atom, RMS: {self.get_fmax(curr_structure)}')
             # CONTCAR should be written after each step, used to restart jobs
             ase.io.write('CONTCAR',curr_structure,format='vasp')
             steps += 1

@@ -131,6 +131,8 @@ class Emulator():
                 self.dyn_flags = {key: self.params[key] for key in keys}
                 return "BFGS"
             if ibrion == 2:
+                keys = ["trajectory"]
+                self.dyn_flags = {key: self.params[key] for key in keys}
                 return "CG"
             if ibrion == 3:
                 keys = ["trajectory","maxstep","dt"]
