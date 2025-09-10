@@ -107,10 +107,9 @@ class Job(ABC):
             self.potential = FAIRChemCalculator(predictor, task_name="odac")
 
         elif ptype == "VASP":
-            self.potential = Vasp(
-                        #command='mpirun vasp_std',
-                    )  # TODO: need to figure out a way to link MPI and SLURM here
-            self.potential.read_incar("INCAR")
+            ase_vasp_command = os.environ['ASE_VASP_COMMAND']
+            os.system("vasp_std")
+            #self.potential.read_incar("INCAR")
         elif ptype == 'PYAMFF':
             try:
                 from pyamff.ase_calc import aseCalc

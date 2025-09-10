@@ -239,6 +239,7 @@ options:
       - UMA
       - PYAMFF
       - EMT
+      - VASP
 
   UMAPOT:
     default: 'omat'
@@ -305,3 +306,35 @@ options:
   TIMESTEP:
     default: 0.1
     kind: float 
+
+  ISPIN:
+    default: 1
+    kind: integer
+    rules:
+      - .EQ. 1 .OR. .EQ. 2
+
+  ISTART:
+    default: 1
+    kind: integer
+    rules:
+      - .EQ. 0 .OR. .EQ. 1 .OR. .EQ. 2 .OR. .EQ. 3
+
+  PREC:
+    default: Normal
+    kind: string
+    values:
+      - Normal
+      - Single
+      - SingleN
+      - Accurate
+      - Low
+      - Medium
+      - High
+  
+  ENCUT:
+    default:  300
+    kind: float
+  
+  EDIFF:
+    default: 1E-4
+    kind: float
