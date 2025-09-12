@@ -19,10 +19,12 @@ def opt_log(self, forces=None) -> str:
             Message to be sent to the logger
     """
     if forces is None:
-        forces = self.optimizable.get_forces()
+        forces = self.optimizable.atoms.get_forces()
+    if forces.ndim == 1:
+        forces = forces.reshape(-1,3)
     fmax = sqrt((forces ** 2).sum(axis=1).max())
-    epot = self.optimizable.get_potential_energy() / len(self.optimizable)
-    ekin = self.atoms.get_kinetic_energy() / len(self.optimizable)
+    epot = self.optimizable.atoms.get_potential_energy() / len(self.optimizable.atoms)
+    ekin = self.atoms.get_kinetic_energy() / len(self.optimizable.atoms)
     etot = epot+ekin
     t = time.localtime()
     name = self.__class__.__name__

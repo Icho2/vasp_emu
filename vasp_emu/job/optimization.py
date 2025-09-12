@@ -17,9 +17,12 @@ def opt_log(self, forces=None) -> str:
             Message to be sent to the logger
     """
     if forces is None:
-        forces = self.optimizable.get_forces()
+        forces = self.optimizable.atoms.get_forces()
+    if forces.ndim == 1:
+        forces = forces.reshape(-1,3)
+    #print("forces: ",forces)
     fmax = sqrt((forces ** 2).sum(axis=1).max())
-    e = self.optimizable.get_potential_energy()
+    e = self.optimizable.atoms.get_potential_energy()
     t = time.localtime()
     name = self.__class__.__name__
     # everything above this line exactly matches the Optimizer.log()
@@ -48,6 +51,7 @@ class OptJob(Job):
         super().__init__(**kwargs) # always first
         self.job_name = "optimization"
         self.set_dynamics() # always last
+        #print("self.optimizable.get_forces():        ", self.optimizable.get_forces())
 
     def set_dynamics(self) -> None:
         """

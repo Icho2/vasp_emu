@@ -80,7 +80,7 @@ class Job(ABC):
         elif name == "MD":
             self.optimizer = VelocityVerlet
         else:
-            raise ValueError(f"Unknowwn dynamics type '{name}'")
+            raise ValueError(f"Unknown dynamics type '{name}'")
         self.set_dynamics_logger()
 
     def set_dynamics_logger(self, name="dynamics.log") -> None:
@@ -103,8 +103,8 @@ class Job(ABC):
         """
         if ptype == "UMA":
             from fairchem.core import pretrained_mlip, FAIRChemCalculator
-            predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cuda")
-            self.potential = FAIRChemCalculator(predictor, task_name="odac")
+            predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cpu")
+            self.potential = FAIRChemCalculator(predictor, task_name=pname)
 
         elif ptype == "VASP":
             ase_vasp_command = os.environ['ASE_VASP_COMMAND']

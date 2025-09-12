@@ -225,5 +225,5 @@ class Emulator():
     def UMA_potential(self):
         if self.config['potential'] != 'UMA':
             return None
-
+        print(self.config['umapot'])
         return self.config['umapot']
