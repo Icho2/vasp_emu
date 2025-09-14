@@ -103,7 +103,18 @@ class Job(ABC):
         """
         if ptype == "UMA":
             from fairchem.core import pretrained_mlip, FAIRChemCalculator
-            predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cpu")
+            """Implementing inference setting for UMA"""
+            from fairchem.core.units.mlip_unit.api.inference import InferenceSettings
+            import torch
+            settings = InferenceSettings(
+                    tf32=True,
+                    activation_checkpointing=False,
+                    merge_mole=True,
+                    compile=True,
+                    wigner_cuda=True,
+                    external_graph_gen=False,
+            )
+            predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cpu", inference_settings=settings)
             self.potential = FAIRChemCalculator(predictor, task_name=pname)
 
         elif ptype == "VASP":
