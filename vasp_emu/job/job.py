@@ -91,7 +91,7 @@ class Job(ABC):
         file_handler.setFormatter(logging.Formatter('%(message)s'))
         self.dyn_logger.addHandler(file_handler)
 
-    def set_potential(self, ptype:str, pname:str=None, seed:int=1234, use_cpu:bool=True) -> None:
+    def set_potential(self, ptype:str, pname:str=None, model:str=None, infer:bool=False, seed:int=1234, use_cpu:bool=True) -> None:
         """
         Set the potential that will be used to find energy and forces
         
@@ -103,21 +103,32 @@ class Job(ABC):
         """
         if ptype == "UMA":
             from fairchem.core import pretrained_mlip, FAIRChemCalculator
-            """Implementing inference setting for UMA"""
             import torch._dynamo
             torch._dynamo.config.suppress_errors = True
             from fairchem.core.units.mlip_unit.api.inference import InferenceSettings
             import torch
-            settings = InferenceSettings(
-                    tf32=True,
-                    activation_checkpointing=False,
-                    merge_mole=True,
-                    compile=True,
-                    wigner_cuda=True,
-                    external_graph_gen=False,
-            )
-            predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cpu", inference_settings=settings)
+            if infer:
+                """Implementing inference setting for UMA"""
+                settings = InferenceSettings(
+                        tf32=True,
+                        activation_checkpointing=False,
+                        merge_mole=True,
+                        compile=True,
+                        wigner_cuda=True,
+                        external_graph_gen=False,
+                )
+            else:
+                settings = InferenceSettings(
+                        tf32=False,
+                        activation_checkpointing=False,
+                        merge_mole=False,
+                        compile=False,
+                        wigner_cuda=False,
+                        external_graph_gen=False,
+                )
+            predictor = pretrained_mlip.get_predict_unit(model, device="cpu", inference_settings=settings)
             self.potential = FAIRChemCalculator(predictor, task_name=pname)
+                
 
         elif ptype == "VASP":
             ase_vasp_command = os.environ['ASE_VASP_COMMAND']

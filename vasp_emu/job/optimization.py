@@ -20,7 +20,6 @@ def opt_log(self, forces=None) -> str:
         forces = self.optimizable.atoms.get_forces()
     if forces.ndim == 1:
         forces = forces.reshape(-1,3)
-    #print("forces: ",forces)
     fmax = sqrt((forces ** 2).sum(axis=1).max())
     e = self.optimizable.atoms.get_potential_energy()
     t = time.localtime()
@@ -51,7 +50,6 @@ class OptJob(Job):
         super().__init__(**kwargs) # always first
         self.job_name = "optimization"
         self.set_dynamics() # always last
-        #print("self.optimizable.get_forces():        ", self.optimizable.get_forces())
 
     def set_dynamics(self) -> None:
         """
