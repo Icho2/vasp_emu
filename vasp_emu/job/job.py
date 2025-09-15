@@ -104,6 +104,8 @@ class Job(ABC):
         if ptype == "UMA":
             from fairchem.core import pretrained_mlip, FAIRChemCalculator
             """Implementing inference setting for UMA"""
+            import torch._dynamo
+            torch._dynamo.config.suppress_errors = True
             from fairchem.core.units.mlip_unit.api.inference import InferenceSettings
             import torch
             settings = InferenceSettings(
