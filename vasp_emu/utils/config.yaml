@@ -338,3 +338,7 @@ options:
   EDIFF:
     default: 1E-4
     kind: float
+
+  LREAL:
+    default: False
+    kind: bool

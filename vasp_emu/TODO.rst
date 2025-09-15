@@ -104,7 +104,7 @@ opt_log()
 - There are two loggers at play, they have the following formatting:
    - #DIM:ROT: OPT-STEP ROT-STEP CURVATURE ROT-ANGLE ROT-FORCE
    - #MinModeTranslate: STEP      TIME          ENERGY    MAX-FORCE     STEPSIZE    CURVATURE  ROT-STEPS
-   - from teh DimerControl and MinModeTranslate respectively
+   - from the DimerControl and MinModeTranslate respectively
    - I suppressed DimerControl, should we bring back?
 
 set_dynamics()
