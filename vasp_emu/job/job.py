@@ -91,7 +91,7 @@ class Job(ABC):
         file_handler.setFormatter(logging.Formatter('%(message)s'))
         self.dyn_logger.addHandler(file_handler)
 
-    def set_potential(self, ptype:str, pname:str=None, model:str=None, infer:bool=False, seed:int=1234, use_cpu:bool=True) -> None:
+    def set_potential(self, ptype:str, pname:str=None, model:str=None, infer:bool=False, device:str=None, seed:int=1234, use_cpu:bool=True) -> None:
         """
         Set the potential that will be used to find energy and forces
         
@@ -126,7 +126,7 @@ class Job(ABC):
                         wigner_cuda=False,
                         external_graph_gen=False,
                 )
-            predictor = pretrained_mlip.get_predict_unit(model, device="cpu", inference_settings=settings)
+            predictor = pretrained_mlip.get_predict_unit(model, device=device, inference_settings=settings)
             self.potential = FAIRChemCalculator(predictor, task_name=pname)
                 
 

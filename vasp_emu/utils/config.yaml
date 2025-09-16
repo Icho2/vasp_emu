@@ -353,4 +353,10 @@ options:
     values:
         - uma-s-1p1
         - uma-m-1p1
-                
+  
+  DEVICE:
+    default: cpu
+    kind: string
+    values:
+        - cpu
+        - cuda

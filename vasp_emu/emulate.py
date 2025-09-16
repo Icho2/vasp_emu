@@ -203,7 +203,7 @@ class Emulator():
                        logger = logger,
                        )
 
-        self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=self.config["umamodel"], infer=self.config["inference"])
+        self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=self.config["umamodel"], infer=self.config["inference"], device=self.config["device"])
         self.job.calculate()
 
     def clean(self) -> None:
