@@ -242,14 +242,14 @@ options:
       - VASP
 
   UMAPOT:
-    default: 'omat'
+    default: OMAT
     kind: string
     values:
-      - oc20
-      - omat
-      - omol
-      - odac
-      - omc
+      - OC20
+      - OMAT
+      - OMOL
+      - ODAC
+      - OMC
      
   # VASP FLAG: IF IBRION=0, gives the timestep (in femtoseconds) for the MD run
   # IF IBRION=1,2,3, gives the scaling factor for the step widths (not yet implemented)
@@ -338,3 +338,25 @@ options:
   EDIFF:
     default: 1E-4
     kind: float
+
+  LREAL:
+    default: False
+    kind: boolean
+
+  INFERENCE:
+    default: False
+    kind: boolean
+
+  UMAMODEL:
+    default: uma-s-1p1
+    kind: string
+    values:
+        - uma-s-1p1
+        - uma-m-1p1
+  
+  DEVICE:
+    default: cpu
+    kind: string
+    values:
+        - cpu
+        - cuda

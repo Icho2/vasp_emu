@@ -25,7 +25,6 @@ class ConfigClass:
         for key in self.config_defaults:
             kattr = self.config_defaults[key]
             self.parser['DEFAULT'][key.lower()] = kattr['default']
-
     # Check legality and set values
     def setValues(self, data_type, vname, values=None, rules=None):
         config_error = False
@@ -101,7 +100,6 @@ class ConfigClass:
         # Check that all options in config.ini are in the configparser
         config_err = False
         b = self.parser.defaults() # it's not actually defaults, just easiest way to retrieve
-
         section_diff = list(set(b) - set(self.config_defaults.keys()))
         if len(section_diff) > 0:
             config_err = True
