@@ -168,30 +168,35 @@ class Job(ABC):
             os.remove(self.dyn_args["trajectory"])
 
 
-    def get_step_data(self, atoms: ase.Atoms) -> dict:
+    def get_step_data(self, atoms: ase.Atoms, forces: np.ndarray) -> dict:
         """
         Gathers ALL data needed for an OUTCAR step into a single dictionary.
-        This is the single point of contact between the simulation state and the logger.
+
+        Args:
+            atoms (ase.Atoms): The atoms object for the current step.
+            forces (np.ndarray): The forces to be used for statistics.
+                                 This can be TRUE forces or EFFECTIVE forces
+                                 for NEBJob.
+                                 Dimensions (n_atoms, 3).
         """
-        # Get primary data
-        forces = atoms.get_forces()
+        # Basic data
         positions = atoms.get_positions()
         energy = atoms.get_potential_energy()
         volume = atoms.get_volume()
 
-        # Calculate derived stats from the primary data
-        fmax_atom = self.get_fmax(atoms)
+        # Derived stats calculated from the provided 'forces' array
+        fmax_atom = np.sqrt((forces ** 2).sum(axis=1).max())
         f_rms = np.sqrt(np.mean(forces**2))
-        
+
         # Placeholder/Parameter-based stats
         stress_total = 31.245   # TODO: Get from atoms.get_stress()
         stress_dim = 20.113     # TODO: Get from atoms.get_stress()
-        n_electrons = np.sum(atoms.get_atomic_numbers())  # actually supposed to be the number of valence electrons but whatever
-        magnetization = 0.0  # no spin yet (?)
+        n_electrons = self.job_params.get('NELECT', 439.0)
+        magnetization = self.job_params.get('NUPDOWN', 69.0)
 
         return {
             "positions": positions,
-            "forces": forces,
+            "forces": forces,  # This now correctly stores either true or effective
             "energy": energy,
             "fmax_atom": fmax_atom,
             "f_rms": f_rms,
@@ -203,7 +208,7 @@ class Job(ABC):
         }
 
 
-    def get_fmax(self, atoms:ase.Atoms) -> float:
-        """Returns fmax, as used by optimizers."""
-        forces = atoms.get_forces()
-        return sqrt((forces ** 2).sum(axis=1).max())
+#    def get_fmax(self, atoms:ase.Atoms) -> float:
+#        """Returns fmax, as used by optimizers."""
+#        forces = atoms.get_forces()
+#        return sqrt((forces ** 2).sum(axis=1).max())

@@ -76,7 +76,8 @@ class OptJob(Job):
         finished = False
         while not finished:
             self.dynamics.run(fmax=max_force, steps=1)
-            step_data = self.get_step_data(curr_structure)  # gather common data
+            step_data = self.get_step_data(curr_structure,
+                                           curr_structure.get_forces())  # gather common data
             
             # Convergence check
             if step_data['fmax_atom'] < max_force:

@@ -6,7 +6,7 @@ from math import sqrt
 import numpy as np
 
 import ase
-from ase.mep import NEB
+from ase.mep.neb import NEB, NEBState
 from ase.optimize.optimize import Optimizer, OptimizableAtoms
 from ase.geometry import find_mic
 from vasp_emu.job.job import Job
@@ -43,6 +43,61 @@ def opt_log(self, forces=None) -> str:
 
     msg += f"{name}:  {self.nsteps:3d}    {t[3]:02d}:{t[4]:02d}:{t[5]:02d} {e:12.6f} {fmax:12.6f}"
     return msg
+
+
+class VaspNEB(NEB):
+    """
+    A custom NEB class that intercepts intermediate values (tangents, projections)
+    from ASE's internal calculations for use in the OUTCAR writer.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # This dictionary will store the stats for each image
+        self.intermediate_stats = {}
+
+    def get_forces(self):
+        # --- Part 1: Replicate the data setup from ASE's BaseNEB get_forces() ---
+        images = self.images
+        real_forces_array = np.empty(((self.nimages - 2), self.natoms, 3))
+        energies = np.empty(self.nimages)
+
+        if self.method != 'aseneb':
+            energies[0] = images[0].get_potential_energy()
+            energies[-1] = images[-1].get_potential_energy()
+
+        for i in range(1, self.nimages - 1):
+            real_forces_array[i - 1] = images[i].get_forces()
+            energies[i] = images[i].get_potential_energy()
+
+        # --- Part 2: Intercept Intermediate Values ---
+        state = NEBState(self, images, energies)
+        self.imax = state.imax
+        self.emax = state.emax # Store the barrier height
+
+        spring1 = state.spring(0)
+        for i in range(1, self.nimages - 1):
+            spring2 = state.spring(i)
+            
+            # Use ASE's own method to get the tangent it will use
+            tangent = self.neb_method.get_tangent(state, spring1, spring2, i)
+            
+            # Get the projection of the real force onto the tangent
+            tangential_force = np.vdot(real_forces_array[i - 1], tangent)
+
+            # Get the projection of the spring force
+            proj_spring = (spring2.nt * spring2.k - spring1.nt * spring1.k)
+
+            # Store the values we need for the OUTCAR
+            self.intermediate_stats[i] = {
+                'proj_real': tangential_force,
+                'proj_spring': proj_spring
+            }
+            spring1 = spring2
+
+        # --- Part 3: Call the original get_forces method ---
+        # Now that we've stored the data we need, we let the original method
+        # run to get the final effective forces for the optimizer.
+        return super().get_forces()
 
 
 class NEBJob(Job):
@@ -84,9 +139,12 @@ class NEBJob(Job):
             if i != 0 and i != n_images + 1:  # don't log the first and last images
                 self.outcar_writers[i] = OutcarWriter(i_dir)
 
-        self.neb = NEB(self.images, allow_shared_calculator=True)  # NOTE: if parallelized, can't use shared calculator
+        self.neb = VaspNEB(self.images, allow_shared_calculator=True,)  # NOTE: if parallelized, can't use shared calculator
+        #self.neb = VaspNEB(self.images, allow_shared_calculator=True, 
+        #                   climb=self.job_params.get('LCLIMB', True),
+        #                   k=abs(self.job_params.get('SPRING', -5.0)),
+        #                   method='improvedtangent') # Ensures VASP-like tangent
         self.set_dynamics()
-        print(self.dyn_args["trajectory"])
 
     def set_dynamics(self) -> None:
         """
@@ -102,73 +160,29 @@ class NEBJob(Job):
 
     def calculate_neb_stats_for_image(self, image_index: int) -> dict:
         """
-        Calculates all VASP-style NEB stats for a given image.
+        Retrieves intermediate NEB statistics for a given image for OUTCAR writing.
         """
         i = image_index
-        
-        # Get the relevant images from the list
-        image_current = self.images[i]
-        image_prev = self.images[i - 1]
-        image_next = self.images[i + 1]
+        stats = self.neb.intermediate_stats.get(i, {})
 
-        # --- 1. CORRECTLY Calculate displacement vectors (dR) and distances ---
+        # Distances and angles still need to be calculated here
+        vec_prev, _ = find_mic(self.images[i-1].get_positions() - self.images[i].get_positions(), self.images[i].get_cell(), self.images[i].pbc)
+        vec_next, _ = find_mic(self.images[i+1].get_positions() - self.images[i].get_positions(), self.images[i].get_cell(), self.images[i].pbc)
         
-        # Get vector difference for previous image, accounting for periodic boundaries
-        pos_diff_prev = image_prev.get_positions() - image_current.get_positions()
-        dR_prev, _ = find_mic(pos_diff_prev, image_current.get_cell(), image_current.pbc)
-        dist_prev = np.linalg.norm(dR_prev)
+        dist_prev = np.linalg.norm(vec_prev)
+        dist_next = np.linalg.norm(vec_next)
 
-        # Get vector difference for next image, accounting for periodic boundaries
-        pos_diff_next = image_next.get_positions() - image_current.get_positions()
-        dR_next, _ = find_mic(pos_diff_next, image_current.get_cell(), image_current.pbc)
-        dist_next = np.linalg.norm(dR_next)
-        
-        # --- 2. Determine the tangent (replicating VASP logic) ---
-        # This logic chooses the tangent based on the energy landscape
-        E_current = image_current.get_potential_energy()
-        E_prev = image_prev.get_potential_energy()
-        E_next = image_next.get_potential_energy()
+        angle = 0.0
+        if dist_prev > 1e-6 and dist_next > 1e-6:
+             dot = np.dot((-vec_prev).ravel(), vec_next.ravel()) / (dist_prev * dist_next)
+             angle = np.arccos(np.clip(dot, -1, 1)) * 180 / np.pi
 
-        # Note: VASP uses -dR_prev as the forward vector from prev->current
-        tangent_prev = -dR_prev 
-        tangent_next = dR_next
-
-        if E_prev > E_current < E_next: # At a minimum
-            tangent = tangent_next * abs(E_next - E_current) + tangent_prev * abs(E_current - E_prev)
-        elif E_prev < E_current > E_next: # At a maximum (or saddle)
-            tangent = tangent_next * abs(E_next - E_current) + tangent_prev * abs(E_current - E_prev)
-        elif E_next > E_prev:
-            tangent = tangent_next
-        else:
-            tangent = tangent_prev
-        
-        # Normalize the tangent
-        tangent_norm = np.linalg.norm(tangent)
-        if tangent_norm > 0:
-            tangent /= tangent_norm
-
-        # --- 3. Calculate angle between vectors ---
-        if dist_prev > 0 and dist_next > 0:
-            unit_dR_prev = -dR_prev / dist_prev # Pointing forward
-            unit_dR_next = dR_next / dist_next  # Pointing forward
-            dot_product = np.clip(np.sum(unit_dR_prev * unit_dR_next), -1.0, 1.0)
-            angle = np.arccos(dot_product) * 180.0 / np.pi
-        else:
-            angle = 0.0
-
-        # --- 4. Calculate projections ---
-        spring_const = abs(self.job_params.get("SPRING", -5.0))
-        proj_spring = spring_const * (dist_next - dist_prev)
-        
-        force_real = image_current.get_forces() 
-        proj_real = np.sum(force_real * tangent)
-        
         return {
             "dist_prev": dist_prev,
             "dist_next": dist_next,
             "angle": angle,
-            "proj_spring": proj_spring,
-            "proj_real": proj_real
+            "proj_spring": stats.get('proj_spring', 0.0),
+            "proj_real": stats.get('proj_real', 0.0)
         }
 
 
@@ -181,6 +195,7 @@ class NEBJob(Job):
             "efirst": self.images[0].get_potential_energy(), # Requires calc on first image
             "elast": self.images[-1].get_potential_energy() # Requires calc on last image
         }
+
 
     def calculate(self) -> None:
         """
@@ -204,11 +219,13 @@ class NEBJob(Job):
 
         step = 1
         finished = False
-        #import copy
-        #previous_images = [copy.deepcopy(img) for img in self.images]
         while not finished:
             self.dynamics.run(fmax=max_force, steps=1)
-            finished = self.dynamics.converged(self.neb.get_forces().ravel())
+            effective_forces = self.neb.get_forces().reshape(self.neb.nimages - 2, -1, 3)
+            finished = self.dynamics.converged(effective_forces.ravel())
+            if step >= max_steps:
+                finished = True
+            step += 1
 
             for i, image in enumerate(self.images[1:-1], start=1):
                 # Write CONTCAR
@@ -217,7 +234,8 @@ class NEBJob(Job):
                 write(contcar, image, append=False)
                 
                 # 1. Get all common stats (from base Job class)
-                step_data = self.get_step_data(image)
+                image_forces = effective_forces[i-1]
+                step_data = self.get_step_data(image, image_forces)
                 
                 # 2. Get all NEB-specific stats (from this class)
                 neb_stats_dict = self.calculate_neb_stats_for_image(i)
@@ -228,12 +246,6 @@ class NEBJob(Job):
                     step_data=step_data, 
                     neb_stats=neb_stats_dict
                 )
-                # --- END MODIFIED SECTION ---
-
-            if step >= max_steps:
-                finished = True
-            step += 1
-            #previous_images = [copy.deepcopy(img) for img in self.images]
 
         # TODO: figure out how to create XDATCAR for each image
 
