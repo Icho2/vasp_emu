@@ -31,7 +31,8 @@ class OutcarWriter(Logger):
         Write the header for the OUTCAR file.
         Conditionally writes NEB header info if provided.
         """
-        self.info(f"number of ions     NIONS ={len(atoms):7d}\n")
+        self.info("                                       "
+                  f"number of ions     NIONS ={len(atoms):7d}\n")
         
         # If this is an NEB job, the NEBJob class will pass neb_params
         if neb_params:
@@ -110,10 +111,10 @@ class OutcarWriter(Logger):
         """
         self.write_pos_forces(data['positions'], data['forces'])
         self.write_energy(data['energy'])
-        self.info(f"   FORCES: max atom, RMS    {data['fmax_atom']:11.6f} {data['f_rms']:11.6f}")
+        self.info(f"  FORCES: max atom, RMS {data['fmax_atom']:11.6f} {data['f_rms']:11.6f}")
         self.info(f"  Stress total and by dimension {data['stress_total']:11.6f} {data['stress_dim']:11.6f}")
-        self.info(f"   volume of cell :    {data['volume']:11.2f}")
-        self.info(f"   number of electron    {data['n_electrons']:12.7f} magnetization     {data['magnetization']:11.7f}")
+        self.info(f"  volume of cell : {data['volume']:11.2f}")
+        self.info(f" number of electron {data['n_electrons']:15.7f} magnetization {data['magnetization']:15.7f}")
 
 
     def write_energy(self, energy: float) -> None:
@@ -128,7 +129,9 @@ class OutcarWriter(Logger):
                          "(expected between characters 67 ad 78)")
         if energy <= -1e9 or energy >= 1e10:
             self.warning(f"Energy {energy} is out of expected range for proper printing in OUTCAR")
-        line = f"  energy without entropy ={energy:18.8f}  energy(sigma->0) ={energy:18.8f}\n"
+
+        # NOTE: yes, there are 2 spaces between 'energy' and 'without', and none between 'entropy' and '='
+        line = f"  energy  without entropy= {energy:17.8f}  energy(sigma->0) = {energy:17.8f}\n"
         self.info(line)
 
 
