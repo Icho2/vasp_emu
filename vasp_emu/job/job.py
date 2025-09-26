@@ -4,6 +4,7 @@ import logging
 from math import sqrt
 from abc import ABC, abstractmethod
 
+import numpy as np
 import ase
 from ase.calculators.emt import EMT
 from ase.calculators.vasp import Vasp
@@ -12,6 +13,7 @@ from ase.md.verlet import VelocityVerlet
 from ase.optimize import BFGS, FIRE, MDMin
 from ase.optimize.sciopt import SciPyFminCG
 from vasp_emu.opt.sdlbfgs import SDLBFGS
+from vasp_emu.io import outcar
 
 class Job(ABC):
     """ 
@@ -24,11 +26,11 @@ class Job(ABC):
         dyn_args (dict): arguments that need to be passed to the dynamics/optimizer object
         dynamics (Dynamics): the actual Dynamics/optimizer object used to guide the job
         dyn_logger (logging.Logger) : logger that is used by dynamics/optimizer object
-        logger(logging.Logger) : logger that is used for job informatoin
+        outcar_writer (outcar.OutcarWriter) : logger that is used for job informatoin
         potential : The potential used to run the dynamics
     """
     def __init__(self, structure:ase.Atoms, dyn_name:str, dyn_args:dict, job_params:dict,
-                 logger:logging.Logger=None) -> None:
+                 outcar_writer:outcar.OutcarWriter=None) -> None:
         """
         Construct a Job object
         
@@ -37,7 +39,7 @@ class Job(ABC):
             dyn_name (str): A string that indicates what dynamics/optimizer to use
             dyn_args (dict): The arguments needed to initializee the dynamics/optimizer
             job_params (dict): The arguments needed to run the job (e.g. max_steps, fmax)
-            logger (logging.Logger): A logger object for the OUTCAR file
+            outcar_writer (outcar.OutcarWriter): A logger object for the OUTCAR file
         """
         # Attributes to be set later
         self.job_name = ""
@@ -45,7 +47,7 @@ class Job(ABC):
         self.potential = None
         self.dyn_logger = None
         # Other Attributes that
-        self.logger = logger
+        self.outcar_writer = outcar_writer
         self.dyn_args = dyn_args
         self.job_params = job_params
         self.set_optimizer(dyn_name)
@@ -151,10 +153,6 @@ class Job(ABC):
         else:
             raise ValueError(f"Unknown potential type '{ptype}' given")
 
-    def get_fmax(self, atoms:ase.Atoms) -> float:
-        """Returns fmax, as used by optimizers with NEB."""
-        forces = atoms.get_forces()
-        return sqrt((forces ** 2).sum(axis=1).max())
 
     def create_xdatcar(self, delete:bool=True) -> None:
         """
@@ -168,3 +166,44 @@ class Job(ABC):
         ase.io.vasp.write_vasp_xdatcar("XDATCAR", traj)
         if delete:
             os.remove(self.dyn_args["trajectory"])
+
+
+    def get_step_data(self, atoms: ase.Atoms) -> dict:
+        """
+        Gathers ALL data needed for an OUTCAR step into a single dictionary.
+        This is the single point of contact between the simulation state and the logger.
+        """
+        # Get primary data
+        forces = atoms.get_forces()
+        positions = atoms.get_positions()
+        energy = atoms.get_potential_energy()
+        volume = atoms.get_volume()
+
+        # Calculate derived stats from the primary data
+        fmax_atom = self.get_fmax(atoms)
+        f_rms = np.sqrt(np.mean(forces**2))
+        
+        # Placeholder/Parameter-based stats
+        stress_total = 31.245   # TODO: Get from atoms.get_stress()
+        stress_dim = 20.113     # TODO: Get from atoms.get_stress()
+        n_electrons = np.sum(atoms.get_atomic_numbers())  # actually supposed to be the number of valence electrons but whatever
+        magnetization = 0.0  # no spin yet (?)
+
+        return {
+            "positions": positions,
+            "forces": forces,
+            "energy": energy,
+            "fmax_atom": fmax_atom,
+            "f_rms": f_rms,
+            "stress_total": stress_total,
+            "stress_dim": stress_dim,
+            "volume": volume,
+            "n_electrons": n_electrons,
+            "magnetization": magnetization
+        }
+
+
+    def get_fmax(self, atoms:ase.Atoms) -> float:
+        """Returns fmax, as used by optimizers."""
+        forces = atoms.get_forces()
+        return sqrt((forces ** 2).sum(axis=1).max())

@@ -172,35 +172,38 @@ class Emulator():
         elif self.config['ichain'] == 2:
             if (self.config['ibrion'] == 3) and (self.config['potim'] == 0):
                 structure = ase.io.read("POSCAR")
-                logger = OutcarWriter()
+                outcar_writer = OutcarWriter()
                 self.job = DimerJob(
                         structure = structure,
                         dyn_name = self.dynamics_name,
                         dyn_args = self.dyn_flags,
                         job_params = job_params,
-                        logger = logger,
+                        outcar_writer = outcar_writer,
                         )
             else:
                 raise AttributeError("To run dimer, INCAR must include IBRION=3 and POTIM=0")
+        elif self.config['ichain'] != -1:  # default value (MD or optimization)
+            raise ValueError(f"Unsupported ICHAIN flag: {self.config['ichain']}\n"
+                             "Only ICHAIN=0 (NEB) and ICHAIN=2 (Dimer) are currently supported in vasp_emu.")
         elif self.config["ibrion"] == 0:
             structure = ase.io.read("POSCAR")
-            logger = OutcarWriter()
+            outcar_writer = OutcarWriter()
             self.job = MDJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
                        dyn_args = self.dyn_flags,
                        job_params = job_params,
-                       logger = logger,
+                       outcar_writer = outcar_writer,
                        )
         else:
             structure = ase.io.read("POSCAR")
-            logger = OutcarWriter()
+            outcar_writer = OutcarWriter()
             self.job = OptJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
                        dyn_args = self.dyn_flags,
                        job_params = job_params,
-                       logger = logger,
+                       outcar_writer = outcar_writer,
                        )
 
         self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=self.config["umamodel"], infer=self.config["inference"], device=self.config["device"])
