@@ -365,3 +365,8 @@ options:
   LCLIMB:
       default: True
       kind: boolean
+
+  # spring constant for NEB, should be a negative number
+  SPRING:
+      default: -5.0
+      kind: float
