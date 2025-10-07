@@ -163,6 +163,9 @@ class Emulator():
 
         if self.config['ichain'] == 0:  # NEB
             job_params["num_img"] = self.params["num_img"]
+            job_params['lclimb'] = self.config['lclimb']
+            job_params['spring'] = self.config['spring']
+            job_params['isif'] = self.config['isif']
             self.job = NEBJob(
                         structure = None,
                         dyn_name = self.dynamics_name,
@@ -173,6 +176,7 @@ class Emulator():
             if (self.config['ibrion'] == 3) and (self.config['potim'] == 0):
                 structure = ase.io.read("POSCAR")
                 outcar_writer = OutcarWriter()
+                job_params['isif'] = self.config['isif']
                 self.job = DimerJob(
                         structure = structure,
                         dyn_name = self.dynamics_name,
@@ -188,6 +192,7 @@ class Emulator():
         elif self.config["ibrion"] == 0:
             structure = ase.io.read("POSCAR")
             outcar_writer = OutcarWriter()
+            job_params['isif'] = self.config['isif']
             self.job = MDJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
@@ -198,6 +203,7 @@ class Emulator():
         else:
             structure = ase.io.read("POSCAR")
             outcar_writer = OutcarWriter()
+            job_params['isif'] = self.config['isif']
             self.job = OptJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
