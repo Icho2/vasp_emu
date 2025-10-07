@@ -11,7 +11,8 @@ from ase.optimize.optimize import Optimizer, OptimizableAtoms
 from ase.geometry import find_mic
 from vasp_emu.job.job import Job
 from vasp_emu.io.outcar import OutcarWriter
-from ase.io import write
+from ase.io import write 
+from ase.io.vasp import write_vasp_xdatcar
 
 # In vasp_emu/job/neb.py
 
@@ -136,14 +137,14 @@ class NEBJob(Job):
             poscar = os.path.join(i_dir, "POSCAR")
             curr_structure = ase.io.read(poscar)
             self.images.append(curr_structure)
-            if i != 0 and i != n_images + 1:  # don't log the first and last images
-                self.outcar_writers[i] = OutcarWriter(i_dir)
+            #if i != 0 and i != n_images + 1:  # don't log the first and last images
+            self.outcar_writers[i] = OutcarWriter(i_dir)
 
-        self.neb = VaspNEB(self.images, allow_shared_calculator=True,)  # NOTE: if parallelized, can't use shared calculator
-        #self.neb = VaspNEB(self.images, allow_shared_calculator=True, 
-        #                   climb=self.job_params.get('LCLIMB', True),
-        #                   k=abs(self.job_params.get('SPRING', -5.0)),
-        #                   method='improvedtangent') # Ensures VASP-like tangent
+        #self.neb = VaspNEB(self.images, allow_shared_calculator=True,)  # NOTE: if parallelized, can't use shared calculator
+        self.neb = VaspNEB(self.images, allow_shared_calculator=True, 
+                           climb=self.job_params.get('LCLIMB', True),
+                           k=abs(self.job_params.get('SPRING', -5.0)),
+                           method='improvedtangent') # Ensures VASP-like tangent
         self.set_dynamics()
 
     def set_dynamics(self) -> None:
@@ -219,6 +220,7 @@ class NEBJob(Job):
 
         step = 1
         finished = False
+        img_atoms = {}
         while not finished:
             self.dynamics.run(fmax=max_force, steps=1)
             effective_forces = self.neb.get_forces().reshape(self.neb.nimages - 2, -1, 3)
@@ -233,9 +235,15 @@ class NEBJob(Job):
                 contcar = os.path.join(i_dir, "CONTCAR")
                 write(contcar, image, append=False)
                 
+                # Save the images into img_atoms dict
+                try:
+                    img_atoms[i_dir].append(image)
+                except:
+                    img_atoms[i_dir] = [image]
+
                 # 1. Get all common stats (from base Job class)
                 image_forces = effective_forces[i-1]
-                step_data = self.get_step_data(image, image_forces)
+                step_data = self.get_step_data(image, image_forces, calc_stress = True)
                 
                 # 2. Get all NEB-specific stats (from this class)
                 neb_stats_dict = self.calculate_neb_stats_for_image(i)
@@ -248,6 +256,10 @@ class NEBJob(Job):
                 )
 
         # TODO: figure out how to create XDATCAR for each image
+            for i_dir in img_atoms:
+                xdatcar = os.path.join(i_dir, "XDATCAR")
+                write_vasp_xdatcar(xdatcar, img_atoms[i_dir])
+
 
 
     @staticmethod
