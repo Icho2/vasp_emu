@@ -142,8 +142,8 @@ class NEBJob(Job):
 
         #self.neb = VaspNEB(self.images, allow_shared_calculator=True,)  # NOTE: if parallelized, can't use shared calculator
         self.neb = VaspNEB(self.images, allow_shared_calculator=True, 
-                           climb=self.job_params.get('LCLIMB', True),
-                           k=abs(self.job_params.get('SPRING', -5.0)),
+                           climb=self.job_params.get('lclimb', True),
+                           k=abs(self.job_params.get('spring', -5.0)),
                            method='improvedtangent') # Ensures VASP-like tangent
         self.set_dynamics()
 
@@ -191,8 +191,8 @@ class NEBJob(Job):
         """Helper to extract NEB header params from job_params."""
         # TODO: Pull these from your INCAR parser (which should populate self.job_params)
         return {
-            "spring": self.job_params.get("SPRING", -5.0),
-            "lclimb": self.job_params.get("LCLIMB", True),
+            "spring": self.job_params.get("spring", -5.0),
+            "lclimb": self.job_params.get("lclimb", True),
             "efirst": self.images[0].get_potential_energy(), # Requires calc on first image
             "elast": self.images[-1].get_potential_energy() # Requires calc on last image
         }
@@ -243,7 +243,7 @@ class NEBJob(Job):
 
                 # 1. Get all common stats (from base Job class)
                 image_forces = effective_forces[i-1]
-                step_data = self.get_step_data(image, image_forces, calc_stress = True)
+                step_data = self.get_step_data(image, image_forces)
                 
                 # 2. Get all NEB-specific stats (from this class)
                 neb_stats_dict = self.calculate_neb_stats_for_image(i)
