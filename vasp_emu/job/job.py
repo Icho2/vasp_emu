@@ -168,7 +168,7 @@ class Job(ABC):
             os.remove(self.dyn_args["trajectory"])
 
 
-    def get_step_data(self, atoms: ase.Atoms, forces: np.ndarray, calc_stress = False) -> dict:
+    def get_step_data(self, atoms: ase.Atoms, forces: np.ndarray) -> dict:
         """
         Gathers ALL data needed for an OUTCAR step into a single dictionary.
 
@@ -178,8 +178,6 @@ class Job(ABC):
                                  This can be TRUE forces or EFFECTIVE forces
                                  for NEBJob.
                                  Dimensions (n_atoms, 3).
-            calc_stress (boolean): whether to call ase.get_stress to get the 
-                                   stress tensor, and then the trace of it.
         """
         # Basic data
         positions = atoms.get_positions()
@@ -193,13 +191,15 @@ class Job(ABC):
         # Placeholder/Parameter-based stats
         stress_total = -1 
         stress_dim = -1
-        if calc_stress:
+        if self.job_params['isif'] > 0: # checks whether to calculate stress
+            # this is only for ISIF =1
             try:
                 stress = atoms.get_stress()
                 stress_total = np.sqrt(stress[0] ** 2 + stress[1] ** 2 + stress[2] ** 2) 
                 stress_dim = stress_total / np.sqrt(3)
             except:
                 pass
+            # TODO need to also return full stress tensor if needed and be able to write it in the OUTCAR
 
         n_electrons = self.job_params.get('NELECT', int(np.sum(atoms.get_atomic_numbers()))) # either get NELECT
         # or sum the atomic numbers to get the total electrons
