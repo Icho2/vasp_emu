@@ -360,3 +360,8 @@ options:
     values:
         - cpu
         - cuda
+
+  # whether to use climbing image for neb
+  LCLIMB:
+      default: True
+      kind: boolean
