@@ -137,8 +137,8 @@ class NEBJob(Job):
             poscar = os.path.join(i_dir, "POSCAR")
             curr_structure = ase.io.read(poscar)
             self.images.append(curr_structure)
-            #if i != 0 and i != n_images + 1:  # don't log the first and last images
-            self.outcar_writers[i] = OutcarWriter(i_dir)
+            if i != 0 and i != n_images + 1:  # don't log the first and last images
+                self.outcar_writers[i] = OutcarWriter(i_dir)
 
         #self.neb = VaspNEB(self.images, allow_shared_calculator=True,)  # NOTE: if parallelized, can't use shared calculator
         self.neb = VaspNEB(self.images, allow_shared_calculator=True, 
