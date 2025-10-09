@@ -168,6 +168,38 @@ class Job(ABC):
             os.remove(self.dyn_args["trajectory"])
 
 
+    def get_stress(self, atoms: ase.Atoms) -> tuple:
+        """
+        Returns the stress tensor in voight form, stress tensor trace, and trace / sqrt(3)
+        all in a tuple.
+        ISIF == 0: return None
+        ISIF == 0: return trace and trace / sqrt(3) with tensor =  None
+        ISIF > 0: return all 3
+
+        Args:
+            atoms (ase.Atoms): the Atoms object for any given structure
+        """
+        if self.job_params["isif"] == 0:
+            return (None, None, None)
+        elif self.job_params["isif"] > 0:
+            try:
+                stress = atoms.get_stress()
+            except:
+                # TODO above gets you stress if the calculator calculates the stress
+                # otherwise we have to do it manually below
+                # right now return a value of -100
+                stress = [-100 for i in range(6)]
+        else:
+            raise ValueError('The ISIF tag can only be positive integers up to 8')
+        
+        trace = np.sqrt(stress[0] ** 2 + stress[1] ** 2 + stress[2] ** 2)
+        dim = trace / np.sqrt(3)
+
+        if self.job_params["isif"] == 1:
+            return (None, trace, dim)
+        elif self.job_params["isif"] > 1:
+            return(stress, trace, dim)
+            
     def get_step_data(self, atoms: ase.Atoms, forces: np.ndarray) -> dict:
         """
         Gathers ALL data needed for an OUTCAR step into a single dictionary.
@@ -189,18 +221,7 @@ class Job(ABC):
         f_rms = np.sqrt(np.mean(forces**2))
 
         # Placeholder/Parameter-based stats
-        stress_total = -1 
-        stress_dim = -1
-        if self.job_params['isif'] > 0: # checks whether to calculate stress
-            # this is only for ISIF =1
-            try:
-                stress = atoms.get_stress()
-                stress_total = np.sqrt(stress[0] ** 2 + stress[1] ** 2 + stress[2] ** 2) 
-                stress_dim = stress_total / np.sqrt(3)
-            except:
-                pass
-            # TODO need to also return full stress tensor if needed and be able to write it in the OUTCAR
-
+        stress_tensor, stress_total, stress_dim = self.get_stress(atoms)
         n_electrons = self.job_params.get('NELECT', int(np.sum(atoms.get_atomic_numbers()))) # either get NELECT
         # or sum the atomic numbers to get the total electrons
         magnetization = self.job_params.get('NUPDOWN', 0)
@@ -213,6 +234,7 @@ class Job(ABC):
             "f_rms": f_rms,
             "stress_total": stress_total,
             "stress_dim": stress_dim,
+            "stress_tensor": stress_tensor, # voight form
             "volume": volume,
             "n_electrons": n_electrons,
             "magnetization": magnetization
