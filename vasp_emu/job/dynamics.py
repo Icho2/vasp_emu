@@ -70,6 +70,26 @@ class MDJob(Job):
         self.dynamics.log = opt_log.__get__(self.dynamics,Dynamics)
         self.dynamics.attach(lambda : self.dyn_logger.info(self.dynamics.log()),interval=1)
 
+    def get_md_stats(self, current_structure: ase.Atoms) -> dict:
+        """
+        Args:
+            current_structure (ase.Atoms): ase atoms object that represents the atoms at
+                                           any step
+        Returns:
+            (epotential, ekintic, kinetic_lattice, nose potential (es), nose kinetic (eps), temp)
+            in a dict with those keys
+        """
+        # kinetic_lattice, nose potential and kinetic are from vasp. the nose are for MDALGO = 2
+        # or for any Nose-Hoover MD. No idea what kinectic_lattice is. Return 0 for these
+        ekin = current_structure.get_kinetic_energy() / len(current_structure)
+        return {"epotential" : current_structure.get_potential_energy(),
+                "ekinetic": ekin,
+                "kinetic_lattice": 0,
+                "nose_potential": 0,
+                "nose_kinetic": 0,
+                "temperature": ekin / (1.5 * units.kB)
+                }
+
     def calculate(self):
         """
         Perform the MD simulation
@@ -78,13 +98,29 @@ class MDJob(Job):
         max_steps = self.job_params["max_steps"]
         curr_structure.calc = self.potential
         MaxwellBoltzmannDistribution(curr_structure,temperature_K=300)
+        
+        # write the header for OUTCAR
+        self.outcar_writer.write_header(curr_structure)
 
         steps = 0
         finished = False
         while not finished:
             self.dynamics.run(steps=1)
-            self.outcar_writer.info(f'U: {curr_structure.get_potential_energy()}   ' + \
-                                f'fmax: {self.get_fmax(curr_structure)}')
+            #fmax = sqrt(( ** 2).sum(axis=1).max())
+
+            # Write step data
+            step_data = self.get_step_data(curr_structure, curr_structure.get_forces())
+            self.outcar_writer.write_step(
+                steps, 
+                step_data=step_data, 
+            )
+            #self.outcar_writer.info(f'U: {curr_structure.get_potential_energy()}   ' + \
+                                #f'fmax: {fmax}')
+            
+            # Write MD data
+            md_data = self.get_md_stats(curr_structure)
+            self.outcar_writer.write_md_step_stats(md_data = md_data)
+
             # CONTCAR should be written after each step, used to restart jobs
             ase.io.write('CONTCAR',curr_structure,format='vasp')
             steps += 1
