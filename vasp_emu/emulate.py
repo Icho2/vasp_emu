@@ -65,7 +65,8 @@ class Emulator():
                         "timestep": self.config['potim'], # yes, this is confusing, jgwi
                         "max_steps" : self.config["nsw"], 
                         "fmax": -1*self.config['ediffg'] if self.config['ediffg'] < 0 else 0.01,
-                        "num_img": self.config['images'] if 'images' in self.config else 0
+                        "num_img": self.config['images'] if 'images' in self.config else 0,
+                        "isif": self.config['isif']
         }
         self.dynamics_name = self.verify_dynamics(iopt=self.config["iopt"],
                                                     ibrion=self.config["ibrion"])
@@ -159,13 +160,13 @@ class Emulator():
 
     def run(self) -> None:
         """Run the emulator"""
-        job_params = {key: self.params[key] for key in ["max_steps","fmax"]}
+        job_params = {key: self.params[key] for key in ["max_steps","fmax", "isif"]}
 
+        outcar_writer = OutcarWriter(isif = self.params['isif'])
         if self.config['ichain'] == 0:  # NEB
             job_params["num_img"] = self.params["num_img"]
             job_params['lclimb'] = self.config['lclimb']
             job_params['spring'] = self.config['spring']
-            job_params['isif'] = self.config['isif']
             self.job = NEBJob(
                         structure = None,
                         dyn_name = self.dynamics_name,
@@ -175,8 +176,7 @@ class Emulator():
         elif self.config['ichain'] == 2:
             if (self.config['ibrion'] == 3) and (self.config['potim'] == 0):
                 structure = ase.io.read("POSCAR")
-                outcar_writer = OutcarWriter()
-                job_params['isif'] = self.config['isif']
+                #outcar_writer = OutcarWriter()
                 self.job = DimerJob(
                         structure = structure,
                         dyn_name = self.dynamics_name,
@@ -191,8 +191,7 @@ class Emulator():
                              "Only ICHAIN=0 (NEB) and ICHAIN=2 (Dimer) are currently supported in vasp_emu.")
         elif self.config["ibrion"] == 0:
             structure = ase.io.read("POSCAR")
-            outcar_writer = OutcarWriter()
-            job_params['isif'] = self.config['isif']
+            #outcar_writer = OutcarWriter()
             self.job = MDJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
@@ -202,8 +201,7 @@ class Emulator():
                        )
         else:
             structure = ase.io.read("POSCAR")
-            outcar_writer = OutcarWriter()
-            job_params['isif'] = self.config['isif']
+            #outcar_writer = OutcarWriter()
             self.job = OptJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
