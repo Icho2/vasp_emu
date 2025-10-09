@@ -9,12 +9,15 @@ class OutcarWriter(Logger):
     A class to handle writing to the OUTCAR file.
     Inherits from Logger to use logging functionality.
     """
-    def __init__(self, dir: str = '.') -> None:
+    def __init__(self, dir: str = '.', isif: int = 0) -> None:
         """
         Initialize the OutcarWriter at `dir/outcar`.
 
         Args:
             dir (str): Directory where the OUTCAR file will be written.
+            isif (int): VASP tag, whether to calculate stress
+                        if > 0, calc. stress, if > 1, write full tensor
+                        and trace and per dim
         """
         super().__init__(name=dir + '/outcar')
         # Prevent adding multiple handlers if the logger instance is somehow reused by name
@@ -24,6 +27,7 @@ class OutcarWriter(Logger):
             file_handler = FileHandler(filename=f"{dir}/OUTCAR", mode='w')
             file_handler.setFormatter(Formatter('%(message)s'))
             self.addHandler(file_handler)
+            self.isif = isif
 
     
     def write_header(self, atoms: Atoms, neb_params: dict = None) -> None:
@@ -105,17 +109,47 @@ class OutcarWriter(Logger):
         self.info(line2)
 
 
+    def write_md_step_stats(self, md_data: dict) -> None:
+        """
+        Writes the MD-specific information per step
+        """
+        # MD stats header
+        self.info("")
+        self.info("  ENERGY OF THE ELECTRON-ION-THERMOSTAT SYSTEM (eV)")
+        self.info("  ---------------------------------------------------")
+        self.info(f"% ion-electron   TOTEN  ={md_data['epotential']:>17.6f}  see above")
+        self.info(f"  kinetic energy EKIN   ={md_data['ekinetic']:>17.6f}")
+        self.info(f"  kin. lattice  EKIN_LAT={md_data['kinetic_lattice']:>17.6f}  (temperature {md_data['temperature']:.2f} K)")
+        self.info(f"  nose potential ES     ={md_data['nose_potential']:>17.6f}")
+        self.info(f"  nose kinetic   EPS    ={md_data['nose_kinetic']:>17.6f}")
+        self.info(f"  ---------------------------------------------------")
+        etot = sum([md_data[key] for key in md_data if key != 'temperature'])
+        self.info(f"  total energy   ETOTAL ={etot:>17.6f} eV")
+
     def write_common_stats(self, data: dict) -> None:
         """
         Writes the common statistics block from a data dictionary.
         """
         self.write_pos_forces(data['positions'], data['forces'])
         self.write_energy(data['energy'])
-        self.info(f"  FORCES: max atom, RMS {data['fmax_atom']:11.6f} {data['f_rms']:11.6f}")
-        self.info(f"  Stress total and by dimension {data['stress_total']:11.6f} {data['stress_dim']:11.6f}")
+        if self. isif == 0: 
+            # write only the forces
+            self.info(f"  FORCES: max atom, RMS {data['fmax_atom']:11.6f} {data['f_rms']:11.6f}")
+        elif self.isif == 1:
+            # write forces and trace + dim
+            self.info(f"  FORCES: max atom, RMS {data['fmax_atom']:11.6f} {data['f_rms']:11.6f}")
+            self.info(f"  Stress total and by dimension {data['stress_total']:11.6f} {data['stress_dim']:11.6f}")
+        else:
+            # write the entire stress tensor and the forces plus the trace and dim
+            self.info(" stress matrix after NEB project (eV)")
+            self.info(f"{data['stress_tensor'][0]:>13.5f}{data['stress_tensor'][5]:>13.5f}{data['stress_tensor'][4]:>13.5f}")
+            self.info(f"{data['stress_tensor'][3]:>13.5f}{data['stress_tensor'][1]:>13.5f}{data['stress_tensor'][3]:>13.5f}")
+            self.info(f"{data['stress_tensor'][4]:>13.5f}{data['stress_tensor'][5]:>13.5f}{data['stress_tensor'][2]:>13.5f}") 
+            self.info(f"  FORCES: max atom, RMS {data['fmax_atom']:11.6f} {data['f_rms']:11.6f}")
+            self.info(f"  Stress total and by dimension {data['stress_total']:11.6f} {data['stress_dim']:11.6f}")
+
         self.info(f"  volume of cell : {data['volume']:11.2f}")
         self.info(f" number of electron {data['n_electrons']:15.7f} magnetization {data['magnetization']:15.7f}")
-
 
     def write_energy(self, energy: float) -> None:
         """
