@@ -90,6 +90,21 @@ class MDJob(Job):
                 "temperature": ekin / (1.5 * units.kB)
                 }
 
+    def write_contcar(self, current_structure: ase.Atoms) -> None:
+        """
+        Writes the CONTCAR with velocities
+        
+        Args:
+            current_structure (ase.Atoms): ase atoms object that represents the atoms at
+                                           any step
+        """
+        velocities = current_structure.get_velocities()
+        ase.io.write('CONTCAR', current_structure, format = 'vasp')
+        with open("CONTCAR", 'a') as f1:
+            f1.write("\n")
+            for v in velocities:
+                f1.write(f"{v[0]:>16.8E}{v[1]:>16.8E}{v[2]:>16.8E}\n")
+
     def calculate(self):
         """
         Perform the MD simulation
@@ -106,7 +121,6 @@ class MDJob(Job):
         finished = False
         while not finished:
             self.dynamics.run(steps=1)
-            #fmax = sqrt(( ** 2).sum(axis=1).max())
 
             # Write step data
             step_data = self.get_step_data(curr_structure, curr_structure.get_forces())
@@ -114,15 +128,14 @@ class MDJob(Job):
                 steps, 
                 step_data=step_data, 
             )
-            #self.outcar_writer.info(f'U: {curr_structure.get_potential_energy()}   ' + \
-                                #f'fmax: {fmax}')
             
             # Write MD data
             md_data = self.get_md_stats(curr_structure)
             self.outcar_writer.write_md_step_stats(md_data = md_data)
 
             # CONTCAR should be written after each step, used to restart jobs
-            ase.io.write('CONTCAR',curr_structure,format='vasp')
+            self.write_contcar(curr_structure)
+
             steps += 1
             if steps == max_steps:
                 self.outcar_writer.info('Reached NSW')
