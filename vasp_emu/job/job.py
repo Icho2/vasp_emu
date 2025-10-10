@@ -106,6 +106,7 @@ class Job(ABC):
             import torch._dynamo
             torch._dynamo.config.suppress_errors = True
             from fairchem.core.units.mlip_unit.api.inference import InferenceSettings
+            from fairchem.core.units.mlip_unit import load_predict_unit
             import torch
             if infer:
                 """Implementing inference setting for UMA"""
