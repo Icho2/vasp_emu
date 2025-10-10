@@ -9,9 +9,8 @@ class ConfigClass:
         self.init_done = False
         self.cwd = os.getcwd() + '/'
         self.config = {}
-
+        
         self.parser = configparser.ConfigParser(comment_prefixes=("#","!")) 
-
         yaml_file = open(os.path.join(os.path.dirname(__file__), 'config.yaml'))
         self.config_defaults = yaml.load(yaml_file, Loader=yaml.BaseLoader)['options']
         yaml_file.close()
