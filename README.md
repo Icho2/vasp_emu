@@ -1,4 +1,4 @@
-# vasp_emu: An emulator for machine learning potentials in VASP
+# vasp_emu: An emulator for machine learning potentials in VASP.
 
 ## How to install:
 
@@ -8,4 +8,4 @@ export PATH=$PATH:/home/ma62425/vasp_emu/bin/
 export PYTHONPATH=$PYTHONPATH:/home/ma62425/vasp_emu/
 ```
 
-Head over to \examples\O2_relaxation to get familiar with running vasp_emu:
+Head over to \examples\O2_relaxation for a quick start with vasp_emu.
