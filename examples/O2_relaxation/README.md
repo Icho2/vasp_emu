@@ -34,16 +34,18 @@ NSW = 100
 IBRION=1
 IOPT=0
 MAXMOVE=0.1
-POTENTIAL=OCP
+POTENTIAL=UMA
+UMAPOT=OMOL
+UMAMODEL=S
 ```
 
-The INCAR file contains settings for our emulator. In this example, `IOPT` and `POTENTIAL` are the only tags that are not part of VASP. `IOPT=0` tells the emulator that `IBRION` specifies the optimizer, like in VASP. In this example, `IOPT=0` and `IBRION=1`. This means that this example will use the BFGS example. NOTE that in VASP, the "RMM-DIIS" optimizer would be used for the same settings. `POTENTIAL` tells the emulator which machine-learned potential to use. In this example, `POTENTIAL=OCP`, so a potential from OCP is being used. Since the INCAR does not also specify which potential, the default ("EquiformerV2-31M-S2EF-OC20-All+MD") is being used.
+The INCAR file contains settings for our emulator. In this example, `IOPT` and `POTENTIAL` are the only tags that are not part of VASP. `IOPT=0` tells the emulator that `IBRION` specifies the optimizer, like in VASP. In this example, `IOPT=0` and `IBRION=1`. This means that this example will use the BFGS example. NOTE that in VASP, the "RMM-DIIS" optimizer would be used for the same settings. `POTENTIAL` tells the emulator which machine-learned potential to use. In this example, `POTENTIAL=UMA`, `UMAPOT=OMOL`, `UMAMODEL=S` , so the OMOL potential from UMA's small model is being used.
 
 ## Calculation and Expected Output
 
 During the calculation, a temporary file called "path.traj" will be generated. Therefore, if you already have a file with this name in your directory, it's recommended that you temporarily rename.
 
-To run this example, you only need to run `vasp_emu`. Several files will be generated:
+To run this example, you only need to run `vasp_emu` on the command line. Several files will be generated:
 
 - CONTCAR: the final structure
 - OSZICAR: a copy of all the information printed to standard out
