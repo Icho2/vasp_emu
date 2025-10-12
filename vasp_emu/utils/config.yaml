@@ -348,11 +348,11 @@ options:
     kind: boolean
 
   UMAMODEL:
-    default: uma-s-1p1
+    default: S
     kind: string
     values:
-        - uma-s-1p1
-        - uma-m-1p1
+        - S
+        - M
   
   DEVICE:
     default: cpu
