@@ -13,7 +13,7 @@ from ase.md.verlet import VelocityVerlet
 from ase.optimize import BFGS, FIRE, MDMin
 from ase.optimize.sciopt import SciPyFminCG
 from vasp_emu.opt.sdlbfgs import SDLBFGS
-from vasp_emu.io import outcar
+from vasp_emu.io import outcar, dimcar
 
 class Job(ABC):
     """ 
@@ -30,7 +30,8 @@ class Job(ABC):
         potential : The potential used to run the dynamics
     """
     def __init__(self, structure:ase.Atoms, dyn_name:str, dyn_args:dict, job_params:dict,
-                 outcar_writer:outcar.OutcarWriter=None) -> None:
+                 outcar_writer:outcar.OutcarWriter=None,
+                 dimcar_writer:dimcar.DimcarWriter=None) -> None:
         """
         Construct a Job object
         
@@ -48,6 +49,7 @@ class Job(ABC):
         self.dyn_logger = None
         # Other Attributes that
         self.outcar_writer = outcar_writer
+        self.dimcar_writer = dimcar_writer
         self.dyn_args = dyn_args
         self.job_params = job_params
         self.set_optimizer(dyn_name)
