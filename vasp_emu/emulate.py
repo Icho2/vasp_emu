@@ -11,6 +11,7 @@ from vasp_emu.job.dynamics import MDJob
 from vasp_emu.job.dimer import DimerJob
 from vasp_emu.job.optimization import OptJob
 from vasp_emu.io.outcar import OutcarWriter
+from vasp_emu.io.dimcar import DimcarWriter
 from vasp_emu.utils.utils import get_sys_info
 from vasp_emu.utils.config import ConfigClass
 
@@ -176,6 +177,7 @@ class Emulator():
         elif self.config['ichain'] == 2:
             if (self.config['ibrion'] == 3) and (self.config['potim'] == 0):
                 structure = ase.io.read("POSCAR")
+                dimcar_writer = DimcarWriter()
                 #outcar_writer = OutcarWriter()
                 self.job = DimerJob(
                         structure = structure,
@@ -183,6 +185,7 @@ class Emulator():
                         dyn_args = self.dyn_flags,
                         job_params = job_params,
                         outcar_writer = outcar_writer,
+                        dimcar_writer = dimcar_writer,
                         )
             else:
                 raise AttributeError("To run dimer, INCAR must include IBRION=3 and POTIM=0")
@@ -191,7 +194,6 @@ class Emulator():
                              "Only ICHAIN=0 (NEB) and ICHAIN=2 (Dimer) are currently supported in vasp_emu.")
         elif self.config["ibrion"] == 0:
             structure = ase.io.read("POSCAR")
-            #outcar_writer = OutcarWriter()
             self.job = MDJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
