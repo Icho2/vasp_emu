@@ -77,10 +77,9 @@ class MDJob(Job):
         curr_structure = self.poscar
         max_steps = self.job_params["max_steps"]
         curr_structure.calc = self.potential
-        MaxwellBoltzmannDistribution(curr_structure,temperature_K=300)
-
         steps = 0
         finished = False
+        MaxwellBoltzmannDistribution(curr_structure,temperature_K=self.job_params["tebeg"])
         while not finished:
             self.dynamics.run(steps=1)
             self.logger.info(f'U: {curr_structure.get_potential_energy()}   ' + \

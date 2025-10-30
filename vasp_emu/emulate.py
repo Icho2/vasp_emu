@@ -41,12 +41,11 @@ class Emulator():
 
         # Attributes that will be initialized in another function
         self.job = None
-        self.oszicar:logging.Logger = None # Akksay vetoed
+        self.oszicar:logging.Logger = None
         # OUTCAR will be set up in each job
         self.dyn_flags = {}
         # Settings passed from the incar
         self.config = self.read_incar(settings.INCAR)
-
         # This is for matching INCAR parameters with function arguments
         self.params = {
                         "maxstep": self.config["maxmove"],
@@ -62,8 +61,18 @@ class Emulator():
                         "astart": self.config["fastart"],
                         "damping": self.config['damping'],
                         "memory": self.config['ilbfgsmem'],
+                        "isif": self.config['isif'],
+                        "md_algo": self.config['md_algo'],
                         "timestep": self.config['potim'], # yes, this is confusing, jgwi
                         "max_steps" : self.config["nsw"], 
+                        "temperature_K": self.config['tebeg'],
+                        "andersen_prob": self.config['andersen_prob'], # Andersen Thermostat tags
+                        "fixcm": True,
+                        "tdamp": self.config['nhc_period'], # Nose-hoover chain Thermostat tags
+                        "tchain": self.config['nhc_nchains'],
+                        "tloop": self.config['nhc_nrespa'],
+                        "friction": self.config['langevin_gamma'], # Langevin Thermostat tags
+                        "langevin_gamma_l": self.config['langevin_gamma_l'],
                         "fmax": -1*self.config['ediffg'] if self.config['ediffg'] < 0 else 0.01,
                         "num_img": self.config['images'] if 'images' in self.config else 0
         }
@@ -122,9 +131,24 @@ class Emulator():
         if iopt == 0: # we want to use the same settings as vasp
             if ibrion == 0:
                 self.use_md = True
-                keys = ["trajectory","timestep"]
+                if self.params["md_algo"] == 1 and self.params["andersen_prob"] == 0.0: # NVE from Andersen Thermostat tags 
+                    keys = ["trajectory","timestep"]
+                elif self.params["md_algo"] == 1 and self.params["isif"] == 2 and self.params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
+                    keys = ["trajectory","timestep","temperature_K", "andersen_prob", "fixcm"]
+                elif self.params["md_algo"] == 2 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat
+                    keys = ["trajectory","timestep","temperature_K", "tdamp", "tchain", "tloop"]
+                elif self.params["md_algo"] == 3 and self.params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat
+                    keys = ["trajectory", "timestep", "temperature_K", "friction"]
+                elif self.params["md_algo"] == 4 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
+                    keys = ["trajectory","timestep","temperature_K", "tdamp", "tchain", "tloop"]
+                elif self.params["md_algo"] == 5 and self.params["isif"] == 2: # Canonical NVT Ensemble with Canonical Sampling through Velocity Rescaling Thermostat  
+                    self.logger.error("CSVR Thermostat is not yet implemented. Please try another Thermostat.")
+                    sys.exit()
+                elif self.params["md_algo"] == 13 and self.params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
+                    self.logger.error("Multiple Andersen Thermostat is not yet implemented. Please try another Thermostat.")
+                    sys.exit()
                 self.dyn_flags = {key: self.params[key] for key in keys}
-                self.dyn_flags["timestep"] *= ase.units.fs # convert to femtoseconds
+                self.dyn_flags['timestep'] *= ase.units.fs # convert to femtoseconds
                 return "MD"
             if ibrion == 1:
                 keys = ["trajectory","maxstep","alpha"]
@@ -183,6 +207,10 @@ class Emulator():
             else:
                 raise AttributeError("To run dimer, INCAR must include IBRION=3 and POTIM=0")
         elif self.config["ibrion"] == 0:
+            job_params["md_algo"] = self.params["md_algo"]
+            job_params["isif"] = self.params["isif"]
+            job_params["andersen_prob"] = self.params["andersen_prob"]
+            job_params["tebeg"] = self.params["temperature_K"]
             structure = ase.io.read("POSCAR")
             logger = OutcarWriter()
             self.job = MDJob(

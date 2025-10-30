@@ -8,7 +8,7 @@ options:
   # VASP Flag that sets the collision probability for the Anderson thermostat
   # NOTE: Must be between 0 and 1
   # Not yet implemented
-  ANDERSON_PROB:
+  ANDERSEN_PROB:
     default: 0
     kind: float
     rules:
@@ -144,7 +144,7 @@ options:
   # TODO: Not yet implemented,
   LANGEVIN_GAMMA:
     default: 0.0
-    kind: floatlist
+    kind: float
 
   # VASP Flag that specifies friction coefficients (in inverse picoseconds) for lattice DOF 
   # when using Langevin themostat with NpT ensemble
@@ -287,7 +287,7 @@ options:
   # TODO: Determine if this temp must be rescaled, hmmm
   # Not yet implemented
   TEBEG:
-    default: 0.0
+    default: 300.0
     kind: float
     rules:
       - .GE. 0.0
@@ -296,7 +296,7 @@ options:
   # NOTE: while the default says 0.0, it will be set to TEBEG if unspecified
   # Not yet implemented
   TEEND:
-    default: 0.0
+    default: 300.0
     kind: float 
     rules:
       - .GE. 0.0
@@ -360,3 +360,23 @@ options:
     values:
         - cpu
         - cuda
+
+  SMASS:
+    default: 0
+    kind: integer
+    
+  NHC_PERIOD:
+    default: 40
+    kind: float
+
+  NHC_NCHAINS:
+    default: 1
+    kind: integer
+
+  NHC_NRESPA:
+    default: 1
+    kind: integer
+
+  ANDERSEN_PROB:
+    default: 0 # Just a NVE ensemble (No thermostat)
+    kind: float
