@@ -5,10 +5,14 @@ from math import sqrt
 from abc import ABC, abstractmethod
 
 import ase
+import ase.md
+from ase.md.nose_hoover_chain import NoseHooverChainNVT 
+from ase.md.verlet import VelocityVerlet
+from ase.md.langevin import Langevin
+from ase.md.andersen import Andersen  
 from ase.calculators.emt import EMT
 from ase.calculators.vasp import Vasp
 import ase.io
-from ase.md.verlet import VelocityVerlet
 from ase.optimize import BFGS, FIRE, MDMin
 from ase.optimize.sciopt import SciPyFminCG
 from vasp_emu.opt.sdlbfgs import SDLBFGS
@@ -78,7 +82,22 @@ class Job(ABC):
         elif name == "SDLBFGS":
             self.optimizer = SDLBFGS
         elif name == "MD":
-            self.optimizer = VelocityVerlet
+            if self.job_params["md_algo"] == 1 and self.job_params["isif"] == 2 and self.job_params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
+                self.optimizer = Andersen
+            elif self.job_params["md_algo"] == 2 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat  
+                self.optimizer = NoseHooverChainNVT # Is the chain version the same as the standard?
+            elif self.job_params["md_algo"] == 3 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat  
+                self.optimizer = Langevin
+            elif self.job_params["md_algo"] == 4 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
+                self.optimizer = NoseHooverChainNVT
+            elif self.job_params["md_algo"] == 5 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Andsersen Thermostat  
+                self.logger.error("CSVR Thermostat is not yet implemented. Please try another Thermostat.")
+                self.optimizer = None
+            elif self.job_params["md_algo"] == 13 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
+                self.logger.error("Multiple Andersen Thermostat is not yet implemented. Please try another Thermostat.")
+                self.optimizer = None
+            elif self.job_params["md_algo"] == 1 and self.job_params["andersen_prob"] == 0.0:
+                self.optimizer = VelocityVerlet
         else:
             raise ValueError(f"Unknown dynamics type '{name}'")
         self.set_dynamics_logger()

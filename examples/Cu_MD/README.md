@@ -1,4 +1,4 @@
-# Example: O2 Relaxation
+# Example: Molecular Dynamics on a Copper System
 
 This example focuses on relaxing the bond length of an oxygen dimer through geometry optimization with the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm using a potential from Open Catalyst Project (OCP).
 
