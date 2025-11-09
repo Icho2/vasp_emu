@@ -8,6 +8,7 @@ from ase.optimize.optimize import Dynamics
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 
 from vasp_emu.job.job import Job
+from icecream import ic
 
 def opt_log(self, forces=None) -> str:
     """
@@ -80,6 +81,7 @@ class MDJob(Job):
         steps = 0
         finished = False
         MaxwellBoltzmannDistribution(curr_structure,temperature_K=self.job_params["tebeg"])
+        '''Here I will add my sauce'''
         while not finished:
             self.dynamics.run(steps=1)
             self.logger.info(f'U: {curr_structure.get_potential_energy()}   ' + \
@@ -87,6 +89,11 @@ class MDJob(Job):
             # CONTCAR should be written after each step, used to restart jobs
             ase.io.write('CONTCAR',curr_structure,format='vasp')
             steps += 1
+            if steps == self.job_params['initial_nsw'] and self.job_params['ml_helper'] != 'None': # Stop MD and Fintune your model or make it ! 
+                # For now I am not finetuning because I need to figure out how to switch potentials first
+                # Will not switch potentials here, instead I will end the calculation and start another with a new potential in emulate.py
+                self.logger.info('Finished initial run, now running the second potential')
+                finished = True
             if steps == max_steps:
                 self.logger.info('Reached NSW')
                 finished = True

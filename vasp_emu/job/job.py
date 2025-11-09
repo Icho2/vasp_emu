@@ -16,6 +16,7 @@ import ase.io
 from ase.optimize import BFGS, FIRE, MDMin
 from ase.optimize.sciopt import SciPyFminCG
 from vasp_emu.opt.sdlbfgs import SDLBFGS
+from icecream import ic
 
 class Job(ABC):
     """ 
@@ -146,14 +147,66 @@ class Job(ABC):
                         wigner_cuda=False,
                         external_graph_gen=False,
                 )
-            predictor = pretrained_mlip.get_predict_unit(model, device=device, inference_settings=settings)
+            if self.job_params['custom_model'] is not None:
+                predictor = pretrained_mlip.load_predict_unit(model, device=device, inference_settings=settings)
+            else:
+                predictor = pretrained_mlip.get_predict_unit(model, device=device, inference_settings=settings)
+            ic(model)
             self.potential = FAIRChemCalculator(predictor, task_name=pname)
                 
 
-        elif ptype == "VASP":
-            ase_vasp_command = os.environ['ASE_VASP_COMMAND']
-            os.system("vasp_std")
-            #self.potential.read_incar("INCAR")
+        elif ptype == 'VASP':            
+            # Make a copy of a original INCAR because this VASP command overwrites it.
+            import subprocess
+            subprocess.run(['cp','INCAR', 'INCAR_copy'])
+            if self.job_params['initial_nsw'] == 0 and self.job_params['ml_helper'] == None: # To just run regular vasp 
+                self.potential= Vasp(command='~/vasp/vasp.6.5.1/bin/vasp_std',
+                                     restart=False, directory='vasp_run',
+                                     xc = self.job_params['gga'],
+                                     nsw = self.job_paramsp['nsw'],
+                                     ediffg = self.job_params['ediffg'],
+                                     ediff = self.job_params['ediff'],
+                                     smass = self.job_params['smass'],
+                                     langevin_gamma = self.job_params['langevin_gamma'],
+                                     tebeg = self.job_params['tebeg'],
+                                     langevin_gamma_l = self.job_params['langevin_gamma_l'],
+                                     ispin = self.job_params['ispin'],
+                                     lreal = self.job_params['lreal'],
+                                     andersen_prob = self.job_params['andersen_prob'],
+                                     prec = self.job_params['prec'],
+                                     istart = self.job_params['istart'],
+                                     isif = self.job_params['isif'],
+                                     iopt = self.job_params['iopt'],
+                                     ichain = self.job_params['ichain'],
+                                     images = self.job_params['images'],
+                                     ibrion = self.job_params['ibrion'],
+                                     damping = self.job_params['damping']
+                                     )
+            elif self.job_params['initial_nsw'] != 0 and self.job_params['ml_helper'] != None: # Run vasp and then UMA fintuned model from vasp output
+                # First we run the intial vasp run to give the UMA model some images to finetune on
+                self.potential= Vasp(command='~/vasp/vasp.6.5.1/bin/vasp_std',
+                                     restart=False, directory='vasp_run',
+                                     xc = self.job_params['gga'],
+                                     nsw = self.job_params['initial_nsw'],
+                                     ediffg = self.job_params['ediffg'],
+                                     ediff = self.job_params['ediff'],
+                                     smass = self.job_params['smass'],
+                                     langevin_gamma = self.job_params['langevin_gamma'],
+                                     tebeg = self.job_params['tebeg'],
+                                     langevin_gamma_l = self.job_params['langevin_gamma_l'],
+                                     ispin = self.job_params['ispin'],
+                                     lreal = self.job_params['lreal'],
+                                     andersen_prob = self.job_params['andersen_prob'],
+                                     prec = self.job_params['prec'],
+                                     istart = self.job_params['istart'],
+                                     isif = self.job_params['isif'],
+                                     iopt = self.job_params['iopt'],
+                                     ichain = self.job_params['ichain'],
+                                     images = self.job_params['images'],
+                                     ibrion = self.job_params['ibrion'],
+                                     damping = self.job_params['damping']
+                                     )
+
         elif ptype == 'PYAMFF':
             try:
                 from pyamff.ase_calc import aseCalc
