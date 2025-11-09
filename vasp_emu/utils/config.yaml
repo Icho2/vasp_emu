@@ -350,7 +350,17 @@ options:
         - PBE
         - LIBXC
         - SL
-  
+ 
+  INFERENCE:
+    default: False
+    kind: boolean
+
+  UMAMODEL:
+    default: S
+    kind: string
+    values:
+        - S
+        - M
   SMASS:
     default: 0
     kind: integer

@@ -128,6 +128,7 @@ class Job(ABC):
             from fairchem.core.units.mlip_unit.api.inference import InferenceSettings
             from fairchem.core.units.mlip_unit import load_predict_unit
             import torch
+            model_name = {"S":"uma-s-1p1", "M":"uma-m-1p1"}
             if infer:
                 """Implementing inference setting for UMA"""
                 settings = InferenceSettings(
