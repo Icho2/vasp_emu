@@ -148,11 +148,11 @@ class Job(ABC):
                         wigner_cuda=False,
                         external_graph_gen=False,
                 )
-            if self.job_params['custom_model'] is not None:
+            if self.job_params['custom_model'] != 'None':
+                ic(self.job_params['custom_model'])
                 predictor = pretrained_mlip.load_predict_unit(model, device=device, inference_settings=settings)
             else:
                 predictor = pretrained_mlip.get_predict_unit(model, device=device, inference_settings=settings)
-            ic(model)
             self.potential = FAIRChemCalculator(predictor, task_name=pname)
                 
 

@@ -246,7 +246,7 @@ class Emulator():
                        logger = logger,
                        )
         
-        if job_params['custom_model'] is not None:
+        if job_params['custom_model'] != 'None':
             model = os.getenv("PWD") + "/" + self.config['custom_model']
         else:
             model = self.config["umamodel"]
