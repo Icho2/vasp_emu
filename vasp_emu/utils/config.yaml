@@ -73,7 +73,7 @@ options:
   # For improved dimer method (VASP's IBRION=44), 
   # please use IOPT > 0, IBRION=3, POTIM = 0, and ICHAIN = 2 together
   IBRION:
-    default: 0
+    default: 2
     kind: integer
     values:
       - 0 # Run Molecular Dynamics
@@ -343,6 +343,14 @@ options:
     default: False
     kind: boolean
 
+  GGA:
+    default: PBE
+    kind: string
+    values:
+        - PBE
+        - LIBXC
+        - SL
+ 
   INFERENCE:
     default: False
     kind: boolean
@@ -353,14 +361,6 @@ options:
     values:
         - S
         - M
-  
-  DEVICE:
-    default: cpu
-    kind: string
-    values:
-        - cpu
-        - cuda
-
   SMASS:
     default: 0
     kind: integer
@@ -380,3 +380,42 @@ options:
   ANDERSEN_PROB:
     default: 0 # Just a NVE ensemble (No thermostat)
     kind: float
+
+# VASP_EMU SPECIFIC TAGS
+  INFERENCE:
+    default: False
+    kind: boolean
+
+  UMAMODEL:
+    default: uma-s-1p1
+    kind: string
+    values:
+        - uma-s-1p1
+        - uma-m-1p1
+  
+  DEVICE:
+    default: cpu
+    kind: string
+    values:
+        - cpu
+        - cuda
+
+  INITIAL_NSW:
+    default: 0
+    kind: integer
+
+  ML_HELPER:
+    default: None
+    kind: string
+    values:
+        - None
+        - UMA
+        - PYAMFF
+
+  FINETUNE:
+    default: False
+    kind: boolean
+
+  CUSTOM_MODEL:
+    default: None
+    kind: string
