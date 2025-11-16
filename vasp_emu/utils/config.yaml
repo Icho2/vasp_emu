@@ -355,7 +355,7 @@ options:
         - M
   
   DEVICE:
-    default: cpu
+    default: cuda
     kind: string
     values:
         - cpu
@@ -377,6 +377,12 @@ options:
     default: 1
     kind: integer
 
-  ANDERSEN_PROB:
-    default: 0 # Just a NVE ensemble (No thermostat)
-    kind: float
+  # whether to use climbing image for neb
+  LCLIMB:
+      default: True
+      kind: boolean
+
+  # spring constant for NEB, should be a negative number
+  SPRING:
+      default: -5.0
+      kind: float

@@ -70,6 +70,41 @@ class MDJob(Job):
         self.dynamics.log = opt_log.__get__(self.dynamics,Dynamics)
         self.dynamics.attach(lambda : self.dyn_logger.info(self.dynamics.log()),interval=1)
 
+    def get_md_stats(self, current_structure: ase.Atoms) -> dict:
+        """
+        Args:
+            current_structure (ase.Atoms): ase atoms object that represents the atoms at
+                                           any step
+        Returns:
+            (epotential, ekintic, kinetic_lattice, nose potential (es), nose kinetic (eps), temp)
+            in a dict with those keys
+        """
+        # kinetic_lattice, nose potential and kinetic are from vasp. the nose are for MDALGO = 2
+        # or for any Nose-Hoover MD. No idea what kinectic_lattice is. Return 0 for these
+        ekin = current_structure.get_kinetic_energy() / len(current_structure)
+        return {"epotential" : current_structure.get_potential_energy(),
+                "ekinetic": ekin,
+                "kinetic_lattice": 0,
+                "nose_potential": 0,
+                "nose_kinetic": 0,
+                "temperature": ekin / (1.5 * units.kB)
+                }
+
+    def write_contcar(self, current_structure: ase.Atoms) -> None:
+        """
+        Writes the CONTCAR with velocities
+        
+        Args:
+            current_structure (ase.Atoms): ase atoms object that represents the atoms at
+                                           any step
+        """
+        velocities = current_structure.get_velocities()
+        ase.io.write('CONTCAR', current_structure, format = 'vasp')
+        with open("CONTCAR", 'a') as f1:
+            f1.write("\n")
+            for v in velocities:
+                f1.write(f"{v[0]:>16.8E}{v[1]:>16.8E}{v[2]:>16.8E}\n")
+
     def calculate(self):
         """
         Perform the MD simulation
@@ -77,17 +112,32 @@ class MDJob(Job):
         curr_structure = self.poscar
         max_steps = self.job_params["max_steps"]
         curr_structure.calc = self.potential
+        
+        # write the header for OUTCAR
+        self.outcar_writer.write_header(curr_structure)
+
         steps = 0
         finished = False
         MaxwellBoltzmannDistribution(curr_structure,temperature_K=self.job_params["tebeg"])
         while not finished:
             self.dynamics.run(steps=1)
-            self.logger.info(f'U: {curr_structure.get_potential_energy()}   ' + \
-                                f'fmax: {self.get_fmax(curr_structure)}')
+
+            # Write step data
+            step_data = self.get_step_data(curr_structure, curr_structure.get_forces())
+            self.outcar_writer.write_step(
+                steps, 
+                step_data=step_data, 
+            )
+            
+            # Write MD data
+            md_data = self.get_md_stats(curr_structure)
+            self.outcar_writer.write_md_step_stats(md_data = md_data)
+
             # CONTCAR should be written after each step, used to restart jobs
-            ase.io.write('CONTCAR',curr_structure,format='vasp')
+            self.write_contcar(curr_structure)
+
             steps += 1
             if steps == max_steps:
-                self.logger.info('Reached NSW')
+                self.outcar_writer.info('Reached NSW')
                 finished = True
         self.create_xdatcar(False)

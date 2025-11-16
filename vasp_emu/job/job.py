@@ -4,6 +4,7 @@ import logging
 from math import sqrt
 from abc import ABC, abstractmethod
 
+import numpy as np
 import ase
 import ase.md
 from ase.md.nose_hoover_chain import NoseHooverChainNVT 
@@ -16,6 +17,7 @@ import ase.io
 from ase.optimize import BFGS, FIRE, MDMin
 from ase.optimize.sciopt import SciPyFminCG
 from vasp_emu.opt.sdlbfgs import SDLBFGS
+from vasp_emu.io import outcar, dimcar
 
 class Job(ABC):
     """ 
@@ -28,11 +30,12 @@ class Job(ABC):
         dyn_args (dict): arguments that need to be passed to the dynamics/optimizer object
         dynamics (Dynamics): the actual Dynamics/optimizer object used to guide the job
         dyn_logger (logging.Logger) : logger that is used by dynamics/optimizer object
-        logger(logging.Logger) : logger that is used for job informatoin
+        outcar_writer (outcar.OutcarWriter) : logger that is used for job informatoin
         potential : The potential used to run the dynamics
     """
     def __init__(self, structure:ase.Atoms, dyn_name:str, dyn_args:dict, job_params:dict,
-                 logger:logging.Logger=None) -> None:
+                 outcar_writer:outcar.OutcarWriter=None,
+                 dimcar_writer:dimcar.DimcarWriter=None) -> None:
         """
         Construct a Job object
         
@@ -41,7 +44,7 @@ class Job(ABC):
             dyn_name (str): A string that indicates what dynamics/optimizer to use
             dyn_args (dict): The arguments needed to initializee the dynamics/optimizer
             job_params (dict): The arguments needed to run the job (e.g. max_steps, fmax)
-            logger (logging.Logger): A logger object for the OUTCAR file
+            outcar_writer (outcar.OutcarWriter): A logger object for the OUTCAR file
         """
         # Attributes to be set later
         self.job_name = ""
@@ -49,7 +52,8 @@ class Job(ABC):
         self.potential = None
         self.dyn_logger = None
         # Other Attributes that
-        self.logger = logger
+        self.outcar_writer = outcar_writer
+        self.dimcar_writer = dimcar_writer
         self.dyn_args = dyn_args
         self.job_params = job_params
         self.set_optimizer(dyn_name)
@@ -172,10 +176,6 @@ class Job(ABC):
         else:
             raise ValueError(f"Unknown potential type '{ptype}' given")
 
-    def get_fmax(self, atoms:ase.Atoms) -> float:
-        """Returns fmax, as used by optimizers with NEB."""
-        forces = atoms.get_forces()
-        return sqrt((forces ** 2).sum(axis=1).max())
 
     def create_xdatcar(self, delete:bool=True) -> None:
         """
@@ -189,3 +189,82 @@ class Job(ABC):
         ase.io.vasp.write_vasp_xdatcar("XDATCAR", traj)
         if delete:
             os.remove(self.dyn_args["trajectory"])
+
+
+    def get_stress(self, atoms: ase.Atoms) -> tuple:
+        """
+        Returns the stress tensor in voight form, stress tensor trace, and trace / sqrt(3)
+        all in a tuple.
+        ISIF == 0: return None
+        ISIF == 0: return trace and trace / sqrt(3) with tensor =  None
+        ISIF > 0: return all 3
+
+        Args:
+            atoms (ase.Atoms): the Atoms object for any given structure
+        """
+        if self.job_params["isif"] == 0:
+            return (None, None, None)
+        elif self.job_params["isif"] > 0:
+            try:
+                stress = atoms.get_stress()
+            except:
+                # TODO above gets you stress if the calculator calculates the stress
+                # otherwise we have to do it manually below
+                # right now return a value of -100
+                stress = [-100 for i in range(6)]
+        else:
+            raise ValueError('The ISIF tag can only be positive integers up to 8')
+        
+        trace = np.sqrt(stress[0] ** 2 + stress[1] ** 2 + stress[2] ** 2)
+        dim = trace / np.sqrt(3)
+
+        if self.job_params["isif"] == 1:
+            return (None, trace, dim)
+        elif self.job_params["isif"] > 1:
+            return(stress, trace, dim)
+            
+    def get_step_data(self, atoms: ase.Atoms, forces: np.ndarray) -> dict:
+        """
+        Gathers ALL data needed for an OUTCAR step into a single dictionary.
+
+        Args:
+            atoms (ase.Atoms): The atoms object for the current step.
+            forces (np.ndarray): The forces to be used for statistics.
+                                 This can be TRUE forces or EFFECTIVE forces
+                                 for NEBJob.
+                                 Dimensions (n_atoms, 3).
+        """
+        # Basic data
+        positions = atoms.get_positions()
+        energy = atoms.get_potential_energy()
+        volume = atoms.get_volume()
+
+        # Derived stats calculated from the provided 'forces' array
+        fmax_atom = np.sqrt((forces ** 2).sum(axis=1).max())
+        f_rms = np.sqrt(np.mean(forces**2))
+
+        # Placeholder/Parameter-based stats
+        stress_tensor, stress_total, stress_dim = self.get_stress(atoms)
+        n_electrons = self.job_params.get('NELECT', int(np.sum(atoms.get_atomic_numbers()))) # either get NELECT
+        # or sum the atomic numbers to get the total electrons
+        magnetization = self.job_params.get('NUPDOWN', 0)
+
+        return {
+            "positions": positions,
+            "forces": forces,  # This now correctly stores either true or effective
+            "energy": energy,
+            "fmax_atom": fmax_atom,
+            "f_rms": f_rms,
+            "stress_total": stress_total,
+            "stress_dim": stress_dim,
+            "stress_tensor": stress_tensor, # voight form
+            "volume": volume,
+            "n_electrons": n_electrons,
+            "magnetization": magnetization
+        }
+
+
+#    def get_fmax(self, atoms:ase.Atoms) -> float:
+#        """Returns fmax, as used by optimizers."""
+#        forces = atoms.get_forces()
+#        return sqrt((forces ** 2).sum(axis=1).max())

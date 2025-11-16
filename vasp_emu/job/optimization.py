@@ -60,6 +60,7 @@ class OptJob(Job):
         self.dynamics.log = opt_log.__get__(self.dynamics,Optimizer)
         self.dynamics.attach(lambda : self.dyn_logger.info(self.dynamics.log()),interval=1)
 
+
     def calculate(self) -> None:
         """
         Perform the geometry optimization
@@ -68,19 +69,29 @@ class OptJob(Job):
         max_force = self.job_params["fmax"]
         max_steps = self.job_params["max_steps"]
         curr_structure.calc = self.potential
-        steps = 0
+
+        self.outcar_writer.write_header(curr_structure)
+
+        steps = 1
         finished = False
-        self.logger.info('CHAIN: Read ICHAIN        0')
         while not finished:
-            self.dynamics.run(fmax=max_force,steps=1)
-            self.logger.info(f'energy  without entropy=     {curr_structure.get_potential_energy()} energy(sigma->0) =    {curr_structure.get_potential_energy()}')
-            self.logger.info(f'FORCES: max atom, RMS: {self.get_fmax(curr_structure)}')
-            # CONTCAR should be written after each step, used to restart jobs
-            ase.io.write('CONTCAR',curr_structure,format='vasp')
+            self.dynamics.run(fmax=max_force, steps=1)
+            step_data = self.get_step_data(curr_structure,
+                                           curr_structure.get_forces())  # gather common data
+            
+            # Convergence check
+            if step_data['fmax_atom'] < max_force:
+                finished = True
+            elif steps >= max_steps:
+                self.outcar_writer.info('Reached NSW')
+                finished = True
+            
+            # Logging in OUTCAR
+            self.outcar_writer.write_step(steps, step_data)
+
+            # CONTCAR writing
+            ase.io.write('CONTCAR', curr_structure, format='vasp')
+            
             steps += 1
-            if self.get_fmax(curr_structure) < max_force:
-                finished = True
-            elif steps == max_steps:
-                self.logger.info('Reached NSW')
-                finished = True
+
         self.create_xdatcar()

@@ -11,6 +11,7 @@ from vasp_emu.job.dynamics import MDJob
 from vasp_emu.job.dimer import DimerJob
 from vasp_emu.job.optimization import OptJob
 from vasp_emu.io.outcar import OutcarWriter
+from vasp_emu.io.dimcar import DimcarWriter
 from vasp_emu.utils.utils import get_sys_info
 from vasp_emu.utils.config import ConfigClass
 
@@ -74,7 +75,8 @@ class Emulator():
                         "friction": self.config['langevin_gamma'], # Langevin Thermostat tags
                         "langevin_gamma_l": self.config['langevin_gamma_l'],
                         "fmax": -1*self.config['ediffg'] if self.config['ediffg'] < 0 else 0.01,
-                        "num_img": self.config['images'] if 'images' in self.config else 0
+                        "num_img": self.config['images'] if 'images' in self.config else 0,
+                        "isif": self.config['isif']
         }
         self.dynamics_name = self.verify_dynamics(iopt=self.config["iopt"],
                                                     ibrion=self.config["ibrion"])
@@ -183,10 +185,13 @@ class Emulator():
 
     def run(self) -> None:
         """Run the emulator"""
-        job_params = {key: self.params[key] for key in ["max_steps","fmax"]}
+        job_params = {key: self.params[key] for key in ["max_steps","fmax", "isif"]}
 
+        outcar_writer = OutcarWriter(isif = self.params['isif'])
         if self.config['ichain'] == 0:  # NEB
             job_params["num_img"] = self.params["num_img"]
+            job_params['lclimb'] = self.config['lclimb']
+            job_params['spring'] = self.config['spring']
             self.job = NEBJob(
                         structure = None,
                         dyn_name = self.dynamics_name,
@@ -196,39 +201,43 @@ class Emulator():
         elif self.config['ichain'] == 2:
             if (self.config['ibrion'] == 3) and (self.config['potim'] == 0):
                 structure = ase.io.read("POSCAR")
-                logger = OutcarWriter()
+                dimcar_writer = DimcarWriter()
+                #outcar_writer = OutcarWriter()
                 self.job = DimerJob(
                         structure = structure,
                         dyn_name = self.dynamics_name,
                         dyn_args = self.dyn_flags,
                         job_params = job_params,
-                        logger = logger,
+                        outcar_writer = outcar_writer,
+                        dimcar_writer = dimcar_writer,
                         )
             else:
                 raise AttributeError("To run dimer, INCAR must include IBRION=3 and POTIM=0")
+        elif self.config['ichain'] != -1:  # default value (MD or optimization)
+            raise ValueError(f"Unsupported ICHAIN flag: {self.config['ichain']}\n"
+                             "Only ICHAIN=0 (NEB) and ICHAIN=2 (Dimer) are currently supported in vasp_emu.")
         elif self.config["ibrion"] == 0:
             job_params["md_algo"] = self.params["md_algo"]
             job_params["isif"] = self.params["isif"]
             job_params["andersen_prob"] = self.params["andersen_prob"]
             job_params["tebeg"] = self.params["temperature_K"]
             structure = ase.io.read("POSCAR")
-            logger = OutcarWriter()
             self.job = MDJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
                        dyn_args = self.dyn_flags,
                        job_params = job_params,
-                       logger = logger,
+                       outcar_writer = outcar_writer,
                        )
         else:
             structure = ase.io.read("POSCAR")
-            logger = OutcarWriter()
+            #outcar_writer = OutcarWriter()
             self.job = OptJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
                        dyn_args = self.dyn_flags,
                        job_params = job_params,
-                       logger = logger,
+                       outcar_writer = outcar_writer,
                        )
 
         self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=self.config["umamodel"], infer=self.config["inference"], device=self.config["device"])
