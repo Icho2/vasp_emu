@@ -24,9 +24,12 @@ def opt_log(self, forces=None) -> str:
     if forces.ndim == 1:
         forces = forces.reshape(-1,3)
     fmax = sqrt((forces ** 2).sum(axis=1).max())
-    epot = self.optimizable.atoms.get_potential_energy() / len(self.optimizable.atoms)
+    #epot = self.optimizable.atoms.get_potential_energy() / len(self.optimizable.atoms)
+    epot = self.optimizable.atoms.get_potential_energy()
+    #ekin = self.atoms.get_kinetic_energy() / len(self.optimizable.atoms)
     ekin = self.atoms.get_kinetic_energy() / len(self.optimizable.atoms)
     etot = epot+ekin
+#    eext = self.dynamics.get_extended_potential_energy()
     t = time.localtime()
     name = self.__class__.__name__
     # everything above this line exactly matches the Optimizer.log()
@@ -84,6 +87,8 @@ class MDJob(Job):
         '''Here I will add my sauce'''
         while not finished:
             self.dynamics.run(steps=1)
+            ic(self.dynamics.get_conserved_energy())
+            ic(self.dynamics._thermostat.get_thermostat_energy())
             self.logger.info(f'U: {curr_structure.get_potential_energy()}   ' + \
                                 f'fmax: {self.get_fmax(curr_structure)}')
             # CONTCAR should be written after each step, used to restart jobs
