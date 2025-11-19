@@ -5,6 +5,7 @@ import time
 import logging
 
 import ase
+import subprocess
 from vasp_emu.job.job import Job
 from vasp_emu.job.neb import NEBJob
 from vasp_emu.job.dynamics import MDJob
@@ -14,6 +15,7 @@ from vasp_emu.io.outcar import OutcarWriter
 from vasp_emu.io.dimcar import DimcarWriter
 from vasp_emu.utils.utils import get_sys_info
 from vasp_emu.utils.config import ConfigClass
+from icecream import ic
 
 class Emulator():
     """ 
@@ -48,7 +50,7 @@ class Emulator():
         # Settings passed from the incar
         self.config = self.read_incar(settings.INCAR)
         # This is for matching INCAR parameters with function arguments
-        self.params = {
+        self.params = {**self.config,
                         "maxstep": self.config["maxmove"],
                         "trajectory": "dynamics.traj",
                         "alpha": self.config["alpha"],
@@ -63,20 +65,36 @@ class Emulator():
                         "damping": self.config['damping'],
                         "memory": self.config['ilbfgsmem'],
                         "isif": self.config['isif'],
-                        "md_algo": self.config['md_algo'],
+                        "mdalgo": self.config['mdalgo'],
                         "timestep": self.config['potim'], # yes, this is confusing, jgwi
                         "max_steps" : self.config["nsw"], 
                         "temperature_K": self.config['tebeg'],
+                        "tebeg": self.config['tebeg'],
                         "andersen_prob": self.config['andersen_prob'], # Andersen Thermostat tags
                         "fixcm": True,
                         "tdamp": self.config['nhc_period'], # Nose-hoover chain Thermostat tags
                         "tchain": self.config['nhc_nchains'],
                         "tloop": self.config['nhc_nrespa'],
                         "friction": self.config['langevin_gamma'], # Langevin Thermostat tags
+                        "langevin_gamma": self.config['langevin_gamma'],
                         "langevin_gamma_l": self.config['langevin_gamma_l'],
                         "fmax": -1*self.config['ediffg'] if self.config['ediffg'] < 0 else 0.01,
                         "num_img": self.config['images'] if 'images' in self.config else 0,
+<<<<<<< HEAD
                         "isif": self.config['isif']
+=======
+                        "gga": self.config['gga'],
+                        "ediffg": self.config['ediffg'],
+                        "ediff": self.config['ediff'],
+                        "smass": self.config['smass'],
+                        "ispin": self.config['ispin'],
+                        "lreal": self.config['lreal'],
+                        "prec": self.config['prec'],
+                        "istart": self.config['istart'],
+                        "iopt": self.config['iopt'],
+                        "ichain": self.config['ichain'],
+                        
+>>>>>>> c1fe1a9ec4300e95bfc03a984eb3435212fbe025
         }
         self.dynamics_name = self.verify_dynamics(iopt=self.config["iopt"],
                                                     ibrion=self.config["ibrion"])
@@ -133,20 +151,20 @@ class Emulator():
         if iopt == 0: # we want to use the same settings as vasp
             if ibrion == 0:
                 self.use_md = True
-                if self.params["md_algo"] == 1 and self.params["andersen_prob"] == 0.0: # NVE from Andersen Thermostat tags 
+                if self.params["mdalgo"] == 1 and self.params["andersen_prob"] == 0.0: # NVE from Andersen Thermostat tags 
                     keys = ["trajectory","timestep"]
-                elif self.params["md_algo"] == 1 and self.params["isif"] == 2 and self.params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
+                elif self.params["mdalgo"] == 1 and self.params["isif"] == 2 and self.params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
                     keys = ["trajectory","timestep","temperature_K", "andersen_prob", "fixcm"]
-                elif self.params["md_algo"] == 2 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat
+                elif self.params["mdalgo"] == 2 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat
                     keys = ["trajectory","timestep","temperature_K", "tdamp", "tchain", "tloop"]
-                elif self.params["md_algo"] == 3 and self.params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat
+                elif self.params["mdalgo"] == 3 and self.params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat
                     keys = ["trajectory", "timestep", "temperature_K", "friction"]
-                elif self.params["md_algo"] == 4 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
+                elif self.params["mdalgo"] == 4 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
                     keys = ["trajectory","timestep","temperature_K", "tdamp", "tchain", "tloop"]
-                elif self.params["md_algo"] == 5 and self.params["isif"] == 2: # Canonical NVT Ensemble with Canonical Sampling through Velocity Rescaling Thermostat  
+                elif self.params["mdalgo"] == 5 and self.params["isif"] == 2: # Canonical NVT Ensemble with Canonical Sampling through Velocity Rescaling Thermostat  
                     self.logger.error("CSVR Thermostat is not yet implemented. Please try another Thermostat.")
                     sys.exit()
-                elif self.params["md_algo"] == 13 and self.params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
+                elif self.params["mdalgo"] == 13 and self.params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
                     self.logger.error("Multiple Andersen Thermostat is not yet implemented. Please try another Thermostat.")
                     sys.exit()
                 self.dyn_flags = {key: self.params[key] for key in keys}
@@ -185,7 +203,11 @@ class Emulator():
 
     def run(self) -> None:
         """Run the emulator"""
+<<<<<<< HEAD
         job_params = {key: self.params[key] for key in ["max_steps","fmax", "isif"]}
+=======
+        job_params = self.params
+>>>>>>> c1fe1a9ec4300e95bfc03a984eb3435212fbe025
 
         outcar_writer = OutcarWriter(isif = self.params['isif'])
         if self.config['ichain'] == 0:  # NEB
@@ -217,7 +239,7 @@ class Emulator():
             raise ValueError(f"Unsupported ICHAIN flag: {self.config['ichain']}\n"
                              "Only ICHAIN=0 (NEB) and ICHAIN=2 (Dimer) are currently supported in vasp_emu.")
         elif self.config["ibrion"] == 0:
-            job_params["md_algo"] = self.params["md_algo"]
+            job_params["mdalgo"] = self.params["mdalgo"]
             job_params["isif"] = self.params["isif"]
             job_params["andersen_prob"] = self.params["andersen_prob"]
             job_params["tebeg"] = self.params["temperature_K"]
@@ -239,9 +261,25 @@ class Emulator():
                        job_params = job_params,
                        outcar_writer = outcar_writer,
                        )
+        
+        if job_params['custom_model'] != 'None':
+            model = os.getenv("PWD") + "/" + self.config['custom_model']
+        else:
+            model = self.config["umamodel"]
 
-        self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=self.config["umamodel"], infer=self.config["inference"], device=self.config["device"])
+        self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=model, infer=self.config["inference"], device=self.config["device"])
         self.job.calculate()
+        if job_params['ml_helper'] != 'None' and job_params['initial_nsw'] != 0:
+            # Here we call the second potential defined by ml_helper and then run to NSW defined by the NSW tag.
+            structure = ase.io.read("CONTCAR") # CONTCAR because we are picking up where we left off.
+            if job_params['ml_helper'] == 'UMA' and job_params['finetune'] == True:  # I want to finetune if we have the UMA potential
+                from vasp_emu.utils.finetune_data import train_test_splits
+                train_test_splits()# First make the train test splits
+                subprocess.run(f"bash $HOME/vasp_emu/vasp_emu/utils/finetune.sh", shell=True, check=True)
+            pname = os.getenv("PWD") + "/finetuned_model/checkpoints/final/inference_ckpt.pt"
+
+            self.job.set_potential(ptype=self.config['ml_helper'], pname=self.config['umapot'], model=self.config["umamodel"], infer=self.config["inference"], device=self.config["device"])
+            self.job.calculate() # This works. Now lets finetune before 
 
     def clean(self) -> None:
         """Clean up files generated by the emulator"""

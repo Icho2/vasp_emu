@@ -28,21 +28,34 @@ def get_sys_info(logger = None) -> None:
     """
         Print information about the current system
     """
-    if logger is not None:
+    try:
+        if logger is not None:
+            logger.info("=======================================================")
+            logger.info("                   SYSTEM INFORMATION                  ")
+            logger.info("=======================================================")
+            logger.info('Platform:            %s (%s)', platform.system(),platform.release())
+            logger.info('Architecture:        %s', platform.machine())
+            logger.info('Hostname:            %s', socket.gethostname())
+            logger.info('Processor:           %s', get_processor_name())
+            logger.info("=======================================================")
+    
+        else:
+            print("=======================================================")
+            print("                   SYSTEM INFORMATION                  ")
+            print("=======================================================")
+            print('Platform:            %s (%s)', platform.system(),platform.release())
+            print('Architecture:        %s', platform.machine())
+            print('Hostname:            %s', socket.gethostname())
+            print('Processor:           %s', get_processor_name())
+            print("=======================================================")
+    
+    except:
         logger.info("=======================================================")
         logger.info("                   SYSTEM INFORMATION                  ")
         logger.info("=======================================================")
         logger.info('Platform:            %s (%s)', platform.system(),platform.release())
         logger.info('Architecture:        %s', platform.machine())
         logger.info('Hostname:            %s', socket.gethostname())
-        logger.info('Processor:           %s', get_processor_name())
+        logger.info('Processor:           %s   NAME NOT AVAILABLE')
         logger.info("=======================================================")
-    else:
-        print("=======================================================")
-        print("                   SYSTEM INFORMATION                  ")
-        print("=======================================================")
-        print('Platform:            %s (%s)', platform.system(),platform.release())
-        print('Architecture:        %s', platform.machine())
-        print('Hostname:            %s', socket.gethostname())
-        print('Processor:           %s', get_processor_name())
-        print("=======================================================")
+    
