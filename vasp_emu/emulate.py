@@ -80,9 +80,6 @@ class Emulator():
                         "langevin_gamma_l": self.config['langevin_gamma_l'],
                         "fmax": -1*self.config['ediffg'] if self.config['ediffg'] < 0 else 0.01,
                         "num_img": self.config['images'] if 'images' in self.config else 0,
-<<<<<<< HEAD
-                        "isif": self.config['isif']
-=======
                         "gga": self.config['gga'],
                         "ediffg": self.config['ediffg'],
                         "ediff": self.config['ediff'],
@@ -93,8 +90,6 @@ class Emulator():
                         "istart": self.config['istart'],
                         "iopt": self.config['iopt'],
                         "ichain": self.config['ichain'],
-                        
->>>>>>> c1fe1a9ec4300e95bfc03a984eb3435212fbe025
         }
         self.dynamics_name = self.verify_dynamics(iopt=self.config["iopt"],
                                                     ibrion=self.config["ibrion"])
@@ -203,11 +198,7 @@ class Emulator():
 
     def run(self) -> None:
         """Run the emulator"""
-<<<<<<< HEAD
-        job_params = {key: self.params[key] for key in ["max_steps","fmax", "isif"]}
-=======
         job_params = self.params
->>>>>>> c1fe1a9ec4300e95bfc03a984eb3435212fbe025
 
         outcar_writer = OutcarWriter(isif = self.params['isif'])
         if self.config['ichain'] == 0:  # NEB
