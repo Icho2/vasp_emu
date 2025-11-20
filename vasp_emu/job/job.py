@@ -155,7 +155,7 @@ class Job(ABC):
                 ic(self.job_params['custom_model'])
                 predictor = pretrained_mlip.load_predict_unit(model, device=device, inference_settings=settings)
             else:
-                predictor = pretrained_mlip.get_predict_unit(model_name[model], device="cuda", inference_settings=settings)
+                predictor = pretrained_mlip.get_predict_unit(model_name[model], device=device, inference_settings=settings)
             self.potential = FAIRChemCalculator(predictor, task_name=pname)
                 
 
@@ -229,7 +229,7 @@ class Job(ABC):
             raise ValueError(f"Unknown potential type '{ptype}' given")
 
 
-    def create_xdatcar(self, delete:bool=True) -> None:
+    def create_xdatcar(self, delete:bool=False) -> None:
         """
         Save the trajectory to a text file known as XDATCAR
         
