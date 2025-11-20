@@ -18,7 +18,8 @@ options:
     rules:
       - .GE. 0 # Hmm, is this okay?, should we use >= instead of GE
       - .LE. 1
-  
+ 
+  # Set this tag to the path of your finetuned UMA model.
   CUSTOM_MODEL:
     default: None
     kind: string
