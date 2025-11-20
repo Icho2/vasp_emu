@@ -6,9 +6,4 @@ VAL_DIR="$PWD/fine_tuning_data/test/"
 OUTPUT_DIR="$PWD/model_output"
 
 cd $FAIRCHEM_PATH
-python3 "$EXECUTABLE_PATH" \
-  --train-dir $TRAIN_DIR \
-  --val-dir $VAL_DIR \
-  --output-dir $OUTPUT_DIR \
-  --uma-task=odac \
-  --regression-task ef
+python3 "$EXECUTABLE_PATH" --train-dir $TRAIN_DIR --val-dir $VAL_DIR --output-dir $OUTPUT_DIR --uma-task=odac --regression-task ef
