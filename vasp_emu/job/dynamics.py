@@ -126,8 +126,6 @@ class MDJob(Job):
         '''Here I will add my sauce'''
         while not finished:
             self.dynamics.run(steps=1)
-            ic(self.dynamics.get_conserved_energy())
-            ic(self.dynamics._thermostat.get_thermostat_energy())
             self.logger.info(f'U: {curr_structure.get_potential_energy()}   ' + \
                                 f'fmax: {self.get_fmax(curr_structure)}')
             # CONTCAR should be written after each step, used to restart jobs
