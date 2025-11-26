@@ -121,7 +121,6 @@ class Emulator():
     def setup_oszicar(self) -> None:
         """Sets up OSZICAR file. OUTCAR will be set up in each job"""
         # root logger so it will take anything that's outputted
-        # NOTE: Akksay says to remove this one
         self.oszicar = logging.getLogger()
         self.oszicar.setLevel(logging.INFO)
         stdout_handler = logging.StreamHandler(sys.stdout)

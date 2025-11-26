@@ -3,6 +3,7 @@ import yaml
 import os, sys, re
 import copy
 import logging, warnings
+from icecream import ic
 
 class ConfigClass:
     def __init__(self):
@@ -89,6 +90,7 @@ class ConfigClass:
         if os.path.isfile(config_file):
             with open(config_file) as stream:
                 lines = self.fix_expr(stream.read())
+                ic(lines)
                 self.parser.read_string("[DEFAULT]\n"+lines)
             self.config_path = os.path.abspath(config_file)
         else:

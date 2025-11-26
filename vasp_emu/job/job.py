@@ -86,21 +86,21 @@ class Job(ABC):
         elif name == "SDLBFGS":
             self.optimizer = SDLBFGS
         elif name == "MD":
-            if self.job_params["md_algo"] == 1 and self.job_params["isif"] == 2 and self.job_params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
+            if self.job_params["mdalgo"] == 1 and self.job_params["isif"] == 2 and self.job_params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
                 self.optimizer = Andersen
-            elif self.job_params["md_algo"] == 2 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat  
+            elif self.job_params["mdalgo"] == 2 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat  
                 self.optimizer = NoseHooverChainNVT # Is the chain version the same as the standard?
-            elif self.job_params["md_algo"] == 3 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat  
+            elif self.job_params["mdalgo"] == 3 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat  
                 self.optimizer = Langevin
-            elif self.job_params["md_algo"] == 4 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
+            elif self.job_params["mdalgo"] == 4 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
                 self.optimizer = NoseHooverChainNVT
-            elif self.job_params["md_algo"] == 5 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Andsersen Thermostat  
+            elif self.job_params["mdalgo"] == 5 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Andsersen Thermostat  
                 self.logger.error("CSVR Thermostat is not yet implemented. Please try another Thermostat.")
                 self.optimizer = None
-            elif self.job_params["md_algo"] == 13 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
+            elif self.job_params["mdalgo"] == 13 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
                 self.logger.error("Multiple Andersen Thermostat is not yet implemented. Please try another Thermostat.")
                 self.optimizer = None
-            elif self.job_params["md_algo"] == 1 and self.job_params["andersen_prob"] == 0.0:
+            elif self.job_params["mdalgo"] == 1 and self.job_params["andersen_prob"] == 0.0:
                 self.optimizer = VelocityVerlet
         else:
             raise ValueError(f"Unknown dynamics type '{name}'")
