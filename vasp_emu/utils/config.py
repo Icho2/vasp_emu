@@ -90,7 +90,6 @@ class ConfigClass:
         if os.path.isfile(config_file):
             with open(config_file) as stream:
                 lines = self.fix_expr(stream.read())
-                ic(lines)
                 self.parser.read_string("[DEFAULT]\n"+lines)
             self.config_path = os.path.abspath(config_file)
         else:

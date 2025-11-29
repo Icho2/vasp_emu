@@ -276,6 +276,16 @@ options:
         - None
         - UMA
         - PYAMFF
+  
+  # Sets the ionic force cutoff for ML model that is ran before DFT if ML_HELPER is not None.
+  ML_HELPER_EDIFFG:
+    default: -5E-02
+    kind: float
+
+  # Sets the max ionic steps for ML model that is ran before DFT if ML_HELPER is not None.
+  ML_HELPER_NSW:
+    default: 1000
+    kind: integer
 
   # VASP FLAG that controls how often the kinetic energy is scaled if SMASS=-1
   # All other behavior not currently supported
