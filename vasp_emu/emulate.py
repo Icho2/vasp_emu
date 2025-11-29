@@ -15,7 +15,6 @@ from vasp_emu.io.outcar import OutcarWriter
 from vasp_emu.io.dimcar import DimcarWriter
 from vasp_emu.utils.utils import get_sys_info
 from vasp_emu.utils.config import ConfigClass
-from icecream import ic
 
 class Emulator():
     """ 
@@ -256,12 +255,12 @@ class Emulator():
         else:
             model = self.config["umamodel"]
         
-        if job_params['ml_helper'] != 'None' and job_params['initial_nsw'] != 0:
+        if job_params['ml_helper'] != 'None' and job_params['ml_helper_nsw'] != 0:
             # Here we run ML first before running DFT
-            self.job.set_potential(ptype=self.config['ml_helper'], pname=self.config['umapot'], model=self.config["umamodel"], infer=self.config["inference"], device=self.config["device"])
+            self.job.set_potential(ptype=self.config['ml_helper'], pname=self.UMA_potential(), model=model, infer=self.config["inference"], device=self.config["device"])
             self.job.calculate()
-            structure = ase.io.read("CONTCAR") # CONTCAR because we are picking up where we left off.
-
+            self.poscar = ase.io.read("CONTCAR") # CONTCAR because we are picking up where we left off.
+        
         self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=model, infer=self.config["inference"], device=self.config["device"])
         self.job.calculate()
         
@@ -282,6 +281,6 @@ class Emulator():
                 break
     
     def UMA_potential(self):
-        if self.config['potential'] != 'UMA':
+        if self.config['potential'] != 'UMA' and self.config['ml_helper'] != 'UMA':
             return None
         return self.config['umapot'].lower()

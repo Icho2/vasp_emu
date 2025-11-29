@@ -3,7 +3,6 @@ import yaml
 import os, sys, re
 import copy
 import logging, warnings
-from icecream import ic
 
 class ConfigClass:
     def __init__(self):
