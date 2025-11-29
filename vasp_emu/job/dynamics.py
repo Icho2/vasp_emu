@@ -8,7 +8,6 @@ from ase.optimize.optimize import Dynamics
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 
 from vasp_emu.job.job import Job
-from icecream import ic
 
 def opt_log(self, forces=None) -> str:
     """
@@ -24,12 +23,9 @@ def opt_log(self, forces=None) -> str:
     if forces.ndim == 1:
         forces = forces.reshape(-1,3)
     fmax = sqrt((forces ** 2).sum(axis=1).max())
-    #epot = self.optimizable.atoms.get_potential_energy() / len(self.optimizable.atoms)
-    epot = self.optimizable.atoms.get_potential_energy()
-    #ekin = self.atoms.get_kinetic_energy() / len(self.optimizable.atoms)
+    epot = self.optimizable.atoms.get_potential_energy() / len(self.optimizable.atoms)
     ekin = self.atoms.get_kinetic_energy() / len(self.optimizable.atoms)
     etot = epot+ekin
-#    eext = self.dynamics.get_extended_potential_energy()
     t = time.localtime()
     name = self.__class__.__name__
     # everything above this line exactly matches the Optimizer.log()
@@ -125,17 +121,22 @@ class MDJob(Job):
         MaxwellBoltzmannDistribution(curr_structure,temperature_K=self.job_params["tebeg"])
         while not finished:
             self.dynamics.run(steps=1)
-            self.logger.info(f'U: {curr_structure.get_potential_energy()}   ' + \
-                                f'fmax: {self.get_fmax(curr_structure)}')
+
+            # Write step data
+            step_data = self.get_step_data(curr_structure, curr_structure.get_forces())
+            self.outcar_writer.write_step(
+                steps, 
+                step_data=step_data, 
+            )
+            
+            # Write MD data
+            md_data = self.get_md_stats(curr_structure)
+            self.outcar_writer.write_md_step_stats(md_data = md_data)
+
             # CONTCAR should be written after each step, used to restart jobs
             self.write_contcar(curr_structure)
 
             steps += 1
-            if steps == self.job_params['initial_nsw'] and self.job_params['ml_helper'] != 'None': # Stop MD and Fintune your model or make it ! 
-                # For now I am not finetuning because I need to figure out how to switch potentials first
-                # Will not switch potentials here, instead I will end the calculation and start another with a new potential in emulate.py
-                self.logger.info('Finished initial run, now running the second potential')
-                finished = True
             if steps == max_steps:
                 self.outcar_writer.info('Reached NSW')
                 finished = True
