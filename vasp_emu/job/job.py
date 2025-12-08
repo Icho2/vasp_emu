@@ -183,7 +183,8 @@ class Job(ABC):
                                      ichain = self.job_params['ichain'],
                                      images = self.job_params['images'],
                                      ibrion = self.job_params['ibrion'],
-                                     damping = self.job_params['damping']
+                                     damping = self.job_params['damping'],
+                                     nblock  = self.job_params['nblock']
                                      )
 
         elif ptype == 'PYAMFF':
@@ -210,10 +211,13 @@ class Job(ABC):
         
         Arguments:
                 delete (bool): whether to delete the intermediate trajectory file used 
-                                (default True)
+                                (default False)
         """
-        traj = ase.io.trajectory.Trajectory(self.dyn_args["trajectory"])
+        traj = ase.io.trajectory.Trajectory(self.dyn_args['trajectory'])
+        traj = traj[::self.job_params["nblock"]]
         ase.io.vasp.write_vasp_xdatcar("XDATCAR", traj)
+        os.remove(self.dyn_args["trajectory"])
+        ase.io.write("dynamics.traj", traj)
         if delete:
             os.remove(self.dyn_args["trajectory"])
 
