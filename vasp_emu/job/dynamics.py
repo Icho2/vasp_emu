@@ -68,7 +68,7 @@ class MDJob(Job):
         """
         super().set_dynamics()
         self.dynamics.log = opt_log.__get__(self.dynamics,Dynamics)
-        self.dynamics.attach(lambda : self.dyn_logger.info(self.dynamics.log()),interval=1)
+        self.dynamics.attach(lambda : self.dyn_logger.info(self.dynamics.log()),interval=self.job_params['nblock'])
 
     def get_md_stats(self, current_structure: ase.Atoms) -> dict:
         """
@@ -123,15 +123,24 @@ class MDJob(Job):
             self.dynamics.run(steps=1)
 
             # Write step data
-            step_data = self.get_step_data(curr_structure, curr_structure.get_forces())
-            self.outcar_writer.write_step(
-                steps, 
-                step_data=step_data, 
-            )
+            if self.job_params["nblock"] == 1:
+                step_data = self.get_step_data(curr_structure, curr_structure.get_forces())
+                self.outcar_writer.write_step(
+                    steps, 
+                    step_data=step_data, 
+                )
+            elif self.job_params["nblock"] > 1:
+                if steps % self.job_params["nblock"] == 0:
+                    step_data = self.get_step_data(curr_structure, curr_structure.get_forces())
+                    self.outcar_writer.write_step(
+                        steps, 
+                        step_data=step_data, 
+                    )
+                
             
             # Write MD data
-            if self.job_params["nblock""] > 1:
-                if self.job_params["nsw"] % self.job_params["nblock"] == 0:
+            if self.job_params["nblock"] > 1:
+                if steps % self.job_params["nblock"] == 0:
                     md_data = self.get_md_stats(curr_structure)
                     self.outcar_writer.write_md_step_stats(md_data = md_data)
                     
@@ -146,4 +155,4 @@ class MDJob(Job):
             if steps == max_steps:
                 self.outcar_writer.info('Reached NSW')
                 finished = True
-        self.create_xdatcar(False)
+        self.create_xdatcar()
