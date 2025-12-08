@@ -130,8 +130,14 @@ class MDJob(Job):
             )
             
             # Write MD data
-            md_data = self.get_md_stats(curr_structure)
-            self.outcar_writer.write_md_step_stats(md_data = md_data)
+            if self.job_params["nblock""] > 1:
+                if self.job_params["nsw"] % self.job_params["nblock"] == 0:
+                    md_data = self.get_md_stats(curr_structure)
+                    self.outcar_writer.write_md_step_stats(md_data = md_data)
+                    
+            elif self.job_params["nblock"] == 1:
+                md_data = self.get_md_stats(curr_structure)
+                self.outcar_writer.write_md_step_stats(md_data = md_data)
 
             # CONTCAR should be written after each step, used to restart jobs
             self.write_contcar(curr_structure)

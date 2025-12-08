@@ -183,7 +183,8 @@ class Job(ABC):
                                      ichain = self.job_params['ichain'],
                                      images = self.job_params['images'],
                                      ibrion = self.job_params['ibrion'],
-                                     damping = self.job_params['damping']
+                                     damping = self.job_params['damping'],
+                                     nblock  = self.job_params['nblock']
                                      )
 
         elif ptype == 'PYAMFF':
