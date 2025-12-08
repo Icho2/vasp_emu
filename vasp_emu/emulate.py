@@ -5,6 +5,7 @@ import time
 import logging
 
 import ase
+import subprocess
 from vasp_emu.job.job import Job
 from vasp_emu.job.neb import NEBJob
 from vasp_emu.job.dynamics import MDJob
@@ -48,7 +49,7 @@ class Emulator():
         # Settings passed from the incar
         self.config = self.read_incar(settings.INCAR)
         # This is for matching INCAR parameters with function arguments
-        self.params = {
+        self.params = {**self.config,
                         "maxstep": self.config["maxmove"],
                         "trajectory": "dynamics.traj",
                         "alpha": self.config["alpha"],
@@ -63,20 +64,31 @@ class Emulator():
                         "damping": self.config['damping'],
                         "memory": self.config['ilbfgsmem'],
                         "isif": self.config['isif'],
-                        "md_algo": self.config['md_algo'],
+                        "mdalgo": self.config['mdalgo'],
                         "timestep": self.config['potim'], # yes, this is confusing, jgwi
                         "max_steps" : self.config["nsw"], 
                         "temperature_K": self.config['tebeg'],
+                        "tebeg": self.config['tebeg'],
                         "andersen_prob": self.config['andersen_prob'], # Andersen Thermostat tags
                         "fixcm": True,
                         "tdamp": self.config['nhc_period'], # Nose-hoover chain Thermostat tags
                         "tchain": self.config['nhc_nchains'],
                         "tloop": self.config['nhc_nrespa'],
                         "friction": self.config['langevin_gamma'], # Langevin Thermostat tags
+                        "langevin_gamma": self.config['langevin_gamma'],
                         "langevin_gamma_l": self.config['langevin_gamma_l'],
                         "fmax": -1*self.config['ediffg'] if self.config['ediffg'] < 0 else 0.01,
                         "num_img": self.config['images'] if 'images' in self.config else 0,
-                        "isif": self.config['isif']
+                        "gga": self.config['gga'],
+                        "ediffg": self.config['ediffg'],
+                        "ediff": self.config['ediff'],
+                        "smass": self.config['smass'],
+                        "ispin": self.config['ispin'],
+                        "lreal": self.config['lreal'],
+                        "prec": self.config['prec'],
+                        "istart": self.config['istart'],
+                        "iopt": self.config['iopt'],
+                        "ichain": self.config['ichain'],
         }
         self.dynamics_name = self.verify_dynamics(iopt=self.config["iopt"],
                                                     ibrion=self.config["ibrion"])
@@ -108,7 +120,6 @@ class Emulator():
     def setup_oszicar(self) -> None:
         """Sets up OSZICAR file. OUTCAR will be set up in each job"""
         # root logger so it will take anything that's outputted
-        # NOTE: Akksay says to remove this one
         self.oszicar = logging.getLogger()
         self.oszicar.setLevel(logging.INFO)
         stdout_handler = logging.StreamHandler(sys.stdout)
@@ -133,20 +144,20 @@ class Emulator():
         if iopt == 0: # we want to use the same settings as vasp
             if ibrion == 0:
                 self.use_md = True
-                if self.params["md_algo"] == 1 and self.params["andersen_prob"] == 0.0: # NVE from Andersen Thermostat tags 
+                if self.params["mdalgo"] == 1 and self.params["andersen_prob"] == 0.0: # NVE from Andersen Thermostat tags 
                     keys = ["trajectory","timestep"]
-                elif self.params["md_algo"] == 1 and self.params["isif"] == 2 and self.params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
+                elif self.params["mdalgo"] == 1 and self.params["isif"] == 2 and self.params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
                     keys = ["trajectory","timestep","temperature_K", "andersen_prob", "fixcm"]
-                elif self.params["md_algo"] == 2 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat
+                elif self.params["mdalgo"] == 2 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat
                     keys = ["trajectory","timestep","temperature_K", "tdamp", "tchain", "tloop"]
-                elif self.params["md_algo"] == 3 and self.params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat
+                elif self.params["mdalgo"] == 3 and self.params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat
                     keys = ["trajectory", "timestep", "temperature_K", "friction"]
-                elif self.params["md_algo"] == 4 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
+                elif self.params["mdalgo"] == 4 and self.params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
                     keys = ["trajectory","timestep","temperature_K", "tdamp", "tchain", "tloop"]
-                elif self.params["md_algo"] == 5 and self.params["isif"] == 2: # Canonical NVT Ensemble with Canonical Sampling through Velocity Rescaling Thermostat  
+                elif self.params["mdalgo"] == 5 and self.params["isif"] == 2: # Canonical NVT Ensemble with Canonical Sampling through Velocity Rescaling Thermostat  
                     self.logger.error("CSVR Thermostat is not yet implemented. Please try another Thermostat.")
                     sys.exit()
-                elif self.params["md_algo"] == 13 and self.params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
+                elif self.params["mdalgo"] == 13 and self.params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
                     self.logger.error("Multiple Andersen Thermostat is not yet implemented. Please try another Thermostat.")
                     sys.exit()
                 self.dyn_flags = {key: self.params[key] for key in keys}
@@ -185,7 +196,7 @@ class Emulator():
 
     def run(self) -> None:
         """Run the emulator"""
-        job_params = {key: self.params[key] for key in ["max_steps","fmax", "isif"]}
+        job_params = self.params
 
         outcar_writer = OutcarWriter(isif = self.params['isif'])
         if self.config['ichain'] == 0:  # NEB
@@ -217,7 +228,7 @@ class Emulator():
             raise ValueError(f"Unsupported ICHAIN flag: {self.config['ichain']}\n"
                              "Only ICHAIN=0 (NEB) and ICHAIN=2 (Dimer) are currently supported in vasp_emu.")
         elif self.config["ibrion"] == 0:
-            job_params["md_algo"] = self.params["md_algo"]
+            job_params["mdalgo"] = self.params["mdalgo"]
             job_params["isif"] = self.params["isif"]
             job_params["andersen_prob"] = self.params["andersen_prob"]
             job_params["tebeg"] = self.params["temperature_K"]
@@ -231,7 +242,6 @@ class Emulator():
                        )
         else:
             structure = ase.io.read("POSCAR")
-            #outcar_writer = OutcarWriter()
             self.job = OptJob(
                        structure = structure,
                        dyn_name = self.dynamics_name,
@@ -239,10 +249,21 @@ class Emulator():
                        job_params = job_params,
                        outcar_writer = outcar_writer,
                        )
-
-        self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=self.config["umamodel"], infer=self.config["inference"], device=self.config["device"])
+        
+        if job_params['custom_model'] != 'None':
+            model = os.getenv("PWD") + "/" + self.config['custom_model']
+        else:
+            model = self.config["umamodel"]
+        
+        if job_params['ml_helper'] != 'None' and job_params['ml_helper_nsw'] != 0:
+            # Here we run ML first before running DFT
+            self.job.set_potential(ptype=self.config['ml_helper'], pname=self.UMA_potential(), model=model, infer=self.config["inference"], device=self.config["device"])
+            self.job.calculate()
+            self.poscar = ase.io.read("CONTCAR") # CONTCAR because we are picking up where we left off.
+        
+        self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=model, infer=self.config["inference"], device=self.config["device"])
         self.job.calculate()
-
+        
     def clean(self) -> None:
         """Clean up files generated by the emulator"""
         for file in ["CONTCAR","OSZICAR","OUTCAR","XDATCAR","dynamics.log","dynamics.traj"]:
@@ -260,6 +281,6 @@ class Emulator():
                 break
     
     def UMA_potential(self):
-        if self.config['potential'] != 'UMA':
+        if self.config['potential'] != 'UMA' and self.config['ml_helper'] != 'UMA':
             return None
         return self.config['umapot'].lower()

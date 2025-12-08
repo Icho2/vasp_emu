@@ -86,21 +86,21 @@ class Job(ABC):
         elif name == "SDLBFGS":
             self.optimizer = SDLBFGS
         elif name == "MD":
-            if self.job_params["md_algo"] == 1 and self.job_params["isif"] == 2 and self.job_params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
+            if self.job_params["mdalgo"] == 1 and self.job_params["isif"] == 2 and self.job_params["andersen_prob"] != 0.0: # Canonical NVT Ensemble with Andsersen Thermostat  
                 self.optimizer = Andersen
-            elif self.job_params["md_algo"] == 2 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat  
+            elif self.job_params["mdalgo"] == 2 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Thermostat  
                 self.optimizer = NoseHooverChainNVT # Is the chain version the same as the standard?
-            elif self.job_params["md_algo"] == 3 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat  
+            elif self.job_params["mdalgo"] == 3 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Langevin Thermostat  
                 self.optimizer = Langevin
-            elif self.job_params["md_algo"] == 4 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
+            elif self.job_params["mdalgo"] == 4 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Nose-Hoover Chain Thermostat  
                 self.optimizer = NoseHooverChainNVT
-            elif self.job_params["md_algo"] == 5 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Andsersen Thermostat  
+            elif self.job_params["mdalgo"] == 5 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Andsersen Thermostat  
                 self.logger.error("CSVR Thermostat is not yet implemented. Please try another Thermostat.")
                 self.optimizer = None
-            elif self.job_params["md_algo"] == 13 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
+            elif self.job_params["mdalgo"] == 13 and self.job_params["isif"] == 2: # Canonical NVT Ensemble with Multiple Andsersen Thermostat  
                 self.logger.error("Multiple Andersen Thermostat is not yet implemented. Please try another Thermostat.")
                 self.optimizer = None
-            elif self.job_params["md_algo"] == 1 and self.job_params["andersen_prob"] == 0.0:
+            elif self.job_params["mdalgo"] == 1 and self.job_params["andersen_prob"] == 0.0:
                 self.optimizer = VelocityVerlet
         else:
             raise ValueError(f"Unknown dynamics type '{name}'")
@@ -151,14 +151,41 @@ class Job(ABC):
                         wigner_cuda=False,
                         external_graph_gen=False,
                 )
-            predictor = pretrained_mlip.get_predict_unit(model_name[model], device=device, inference_settings=settings)
+            if self.job_params['custom_model'] != 'None':
+                predictor = pretrained_mlip.load_predict_unit(model, device=device, inference_settings=settings)
+            else:
+                predictor = pretrained_mlip.get_predict_unit(model_name[model], device=device, inference_settings=settings)
             self.potential = FAIRChemCalculator(predictor, task_name=pname)
                 
 
-        elif ptype == "VASP":
-            ase_vasp_command = os.environ['ASE_VASP_COMMAND']
-            os.system("vasp_std")
-            #self.potential.read_incar("INCAR")
+        elif ptype == 'VASP':            
+            # Make a copy of a original INCAR because this VASP command overwrites it.
+            import subprocess
+            executable = os.environ["ASE_VASP_COMMAND"] 
+            self.potential= Vasp(command=executable,
+                                    restart=False, directory='vasp_run',
+                                     xc = self.job_params['gga'],
+                                     nsw = self.job_params['nsw'],
+                                     ediffg = self.job_params['ediffg'],
+                                     ediff = self.job_params['ediff'],
+                                     encut = self.job_params['encut'],
+                                     smass = self.job_params['smass'],
+                                     langevin_gamma = self.job_params['langevin_gamma'],
+                                     tebeg = self.job_params['tebeg'],
+                                     langevin_gamma_l = self.job_params['langevin_gamma_l'],
+                                     ispin = self.job_params['ispin'],
+                                     lreal = self.job_params['lreal'],
+                                     andersen_prob = self.job_params['andersen_prob'],
+                                     prec = self.job_params['prec'],
+                                     istart = self.job_params['istart'],
+                                     isif = self.job_params['isif'],
+                                     iopt = self.job_params['iopt'],
+                                     ichain = self.job_params['ichain'],
+                                     images = self.job_params['images'],
+                                     ibrion = self.job_params['ibrion'],
+                                     damping = self.job_params['damping']
+                                     )
+
         elif ptype == 'PYAMFF':
             try:
                 from pyamff.ase_calc import aseCalc
@@ -177,7 +204,7 @@ class Job(ABC):
             raise ValueError(f"Unknown potential type '{ptype}' given")
 
 
-    def create_xdatcar(self, delete:bool=True) -> None:
+    def create_xdatcar(self, delete:bool=False) -> None:
         """
         Save the trajectory to a text file known as XDATCAR
         

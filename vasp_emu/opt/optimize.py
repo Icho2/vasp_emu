@@ -12,7 +12,6 @@ import numpy as np
 from ase.parallel import world, barrier
 from ase.io.trajectory import PickleTrajectory, Trajectory
 
-
 class Dynamics:
     """Base-class for all MD and structure optimization classes.
 

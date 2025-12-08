@@ -1,5 +1,9 @@
 ---
 options:
+  ANDERSEN_PROB:
+    default: 0 # Just a NVE ensemble (No thermostat)
+    kind: float
+
   # initial guess for the Hessian during optimization 
   ALPHA:
     default: 70
@@ -14,18 +18,38 @@ options:
     rules:
       - .GE. 0 # Hmm, is this okay?, should we use >= instead of GE
       - .LE. 1
+ 
+  # Set this tag to the path of your finetuned UMA model.
+  CUSTOM_MODEL:
+    default: None
+    kind: string
   
   # The calculated step is multiplied with this number 
   # before added to positions for the SDLBFGS algorithm
   DAMPING:
     default: 1
     kind: float
+  
+  DEVICE:
+    default: cpu
+    kind: string
+    values:
+        - cpu
+        - cuda
 
   # VASP FLAG that determines force converge. IF EDIFFG < 0, then it represents the max norm of the force
   # IF EDIFFG > 0, then converged when abs[E_(i+1) - E_(i)] < EDIFFG
   # IF EDIFF = 0, then converged after NSW steps
+  EDIFF:
+    default: 1E-4
+    kind: float
+
   EDIFFG:
     default: -0.01
+    kind: float
+  
+  ENCUT:
+    default:  300
     kind: float
   
   # Factor to decrease the parameter alpha for FIRE optimizer
@@ -48,6 +72,10 @@ options:
     default: 5e-3
     kind: float
   
+  FINETUNE:
+    default: False
+    kind: boolean
+  
   # Minimum number of iterations before adjusting alpha and dt with FIRE optimizer
   FNMIN:
     default: 5
@@ -67,13 +95,21 @@ options:
   FTIMEINC:
     default: 1.1
     kind: float  
+  
+  GGA:
+    default: PBE
+    kind: string
+    values:
+        - PBE
+        - LIBXC
+        - SL
    
   # VASP Flag that determines how the crystal structure changes during calculation
   # NOTE: VASP allows the setting of -1, 5-8,11,12,40 and 44. These flags are not supported.
   # For improved dimer method (VASP's IBRION=44), 
   # please use IOPT > 0, IBRION=3, POTIM = 0, and ICHAIN = 2 together
   IBRION:
-    default: 0
+    default: 2
     kind: integer
     values:
       - 0 # Run Molecular Dynamics
@@ -99,6 +135,14 @@ options:
 
   # Number of NEB images between the fixed endpoints
   IMAGES:
+    default: 0
+    kind: integer
+  
+  INFERENCE:
+    default: False
+    kind: boolean
+
+  INITIAL_NSW:
     default: 0
     kind: integer
   
@@ -139,6 +183,18 @@ options:
       - 7
       - 8
   
+  ISPIN:
+    default: 1
+    kind: integer
+    rules:
+      - .EQ. 1 .OR. .EQ. 2
+
+  ISTART:
+    default: 1
+    kind: integer
+    rules:
+      - .EQ. 0 .OR. .EQ. 1 .OR. .EQ. 2 .OR. .EQ. 3
+  
   # VASP Flag that specifies friction coefficients (in inverse picoseconds) when using Langevin themostat
   # NOTE: The length of the list is equal to the number NTYP (number of Langevin+Newton atom types) species
   # TODO: Not yet implemented,
@@ -172,7 +228,21 @@ options:
   LLINEOPT:
     default: False
     kind: boolean 
+  
+  LREAL:
+    default: False
+    kind: boolean
+  
+  # whether to use climbing image for neb
+  LCLIMB:
+      default: True
+      kind: boolean
 
+  MAGMOM:
+    default: !expand_floats "0.0"
+    kind: sequence
+    element_type: float
+  
   # maximum allowed step size for translation while optimizing
   # NOTE: This name was changed for ASE in v3.19.3 but VTSTTools
   # expect it to still be named this instead of MAXSTEP
@@ -190,7 +260,7 @@ options:
   #       LANGEVIN_GAMMA must be set for both, but NpT also requires LANGEVIN_GAMMA_L and PMASS
   #       PSTRESS is optional
   # Not yet completely-implemented (only 0)
-  MD_ALGO:
+  MDALGO:
     default: 0
     kind: integer
     values:
@@ -198,7 +268,25 @@ options:
       - 1 # Anderson Thermostat: NVT/NVE ensemble (other configs)
       - 2 # Nose-Hoover thermostat, must set SMASS
       - 3 # Langevin Themostat: NVT/NpT ensembles
+
+  ML_HELPER:
+    default: None
+    kind: string
+    values:
+        - None
+        - UMA
+        - PYAMFF
   
+  # Sets the ionic force cutoff for ML model that is ran before DFT if ML_HELPER is not None.
+  ML_HELPER_EDIFFG:
+    default: -5E-02
+    kind: float
+
+  # Sets the max ionic steps for ML model that is ran before DFT if ML_HELPER is not None.
+  ML_HELPER_NSW:
+    default: 1000
+    kind: integer
+
   # VASP FLAG that controls how often the kinetic energy is scaled if SMASS=-1
   # All other behavior not currently supported
   # Not yet implemented
@@ -210,6 +298,18 @@ options:
   NIMAGE:
     default: 3
     kind: integer
+  
+  NHC_NCHAINS:
+    default: 0
+    kind: integer
+
+  NHC_NRESPA:
+    default: 1
+    kind: integer
+    
+  NHC_PERIOD:
+    default: 40
+    kind: float
   
   # NOT SURE WHAT THIS DOES
   NMIN:
@@ -240,23 +340,25 @@ options:
       - PYAMFF
       - EMT
       - VASP
-
-  UMAPOT:
-    default: OMAT
-    kind: string
-    values:
-      - OC20
-      - OMAT
-      - OMOL
-      - ODAC
-      - OMC
-     
+  
   # VASP FLAG: IF IBRION=0, gives the timestep (in femtoseconds) for the MD run
   # IF IBRION=1,2,3, gives the scaling factor for the step widths (not yet implemented)
   POTIM:
     default: 0.5
     kind: float
-
+  
+  PREC:
+    default: Normal
+    kind: string
+    values:
+      - Normal
+      - Single
+      - SingleN
+      - Accurate
+      - Low
+      - Medium
+      - High
+  
   # VASP Flag that sets the external pressure in kB (not yet implemented)
   # Not yet implemented
   PSTRESS:
@@ -269,19 +371,16 @@ options:
     default: 0.01
     kind: float 
   
-  # VASP Flag that controls the velocities during an MD run
-  # NOTE: Only allows -3, -2, -1, and floats greater than or equal to 0
-  # for -3: NVE ensemble is used (MDALGO = 1 and ANDERSON_PROB = 0.0 recommended instead)
-  # for -2: keep initial velovity contant, must be included in poscar, POTIM = 1.0
-  # for -1: velocitys scaled each step to temperaure (TODO: ADD NBLOCK as an option MOD(NSTEP/NBLOCK) == 1)
-  # T=TEBEG+(TEEND-TEBEG)xNSTEP/NSW (where NSTEP is current step starting from 1)
-  # TODO: Add NBLOCK AS AN OPTION. FOR NOW, AUTO = 1
-  # Not yet implemented
   SMASS:
     default: -3.0
     kind: float
     rules:
       - .EQ. -3 .OR. .EQ. -2 .OR. .EQ. -1 .OR. .GE. 0
+  
+  # spring constant for NEB, should be a negative number
+  SPRING:
+      default: -5.0
+      kind: float
   
   # VASP Flag that sets the starting temperture (in K) of MD run
   # TODO: Determine if this temp must be rescaled, hmmm
@@ -307,82 +406,19 @@ options:
     default: 0.1
     kind: float 
 
-  ISPIN:
-    default: 1
-    kind: integer
-    rules:
-      - .EQ. 1 .OR. .EQ. 2
-
-  ISTART:
-    default: 1
-    kind: integer
-    rules:
-      - .EQ. 0 .OR. .EQ. 1 .OR. .EQ. 2 .OR. .EQ. 3
-
-  PREC:
-    default: Normal
-    kind: string
-    values:
-      - Normal
-      - Single
-      - SingleN
-      - Accurate
-      - Low
-      - Medium
-      - High
-  
-  ENCUT:
-    default:  300
-    kind: float
-  
-  EDIFF:
-    default: 1E-4
-    kind: float
-
-  LREAL:
-    default: False
-    kind: boolean
-
-  INFERENCE:
-    default: False
-    kind: boolean
-
   UMAMODEL:
     default: S
     kind: string
     values:
         - S
         - M
-  
-  DEVICE:
-    default: cuda
+    
+  UMAPOT:
+    default: OMAT
     kind: string
     values:
-        - cpu
-        - cuda
-
-  SMASS:
-    default: 0
-    kind: integer
-    
-  NHC_PERIOD:
-    default: 40
-    kind: float
-
-  NHC_NCHAINS:
-    default: 1
-    kind: integer
-
-  NHC_NRESPA:
-    default: 1
-    kind: integer
-
-  # whether to use climbing image for neb
-  LCLIMB:
-      default: True
-      kind: boolean
-
-  # spring constant for NEB, should be a negative number
-  SPRING:
-      default: -5.0
-      kind: float
+      - OC20
+      - OMAT
+      - OMOL
+      - ODAC
+      - OMC

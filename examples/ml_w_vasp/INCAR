@@ -1,0 +1,19 @@
+ISTART =  1          
+ISPIN  =  1          
+PREC   = Normal      
+ 
+EDIFF  =  1E-08        
+ENCUT  = 300
+
+NSW    =  500          
+IBRION =  1            
+ISIF   =  2            
+EDIFFG = -1E-02
+
+POTENTIAL=VASP
+ML_HELPER=UMA
+UMAPOT=OMOL
+UMAMODEL=S
+DEVICE=cuda
+ML_HELPER_NSW = 10000
+ML_HELPER_EDIFFG = -1E-02
