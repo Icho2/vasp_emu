@@ -15,4 +15,4 @@ export PYTHONPATH=$PYTHONPATH:/path/to/vasp_emu/
 
 Now you have access to the UMA models. These instructions follow those given by the people at fairchem. Here is are those set of instructions: https://fair-chem.github.io/core/install.html .
 
-Head over to \examples\O2_relaxation for a quick start with vasp_emu.
+Head over to `\examples\O2_relaxation` for a quick start with vasp_emu.
