@@ -15,7 +15,7 @@ export ASE_VASP_COMMAND="mpirun path/to/vasp/executable"
 3. Generate an access token.
 4. In your terminal, type "huggingface-cli login" and enter the access token.
 
-Now you have access to the UMA models. These instructions follow those given by the people at fairchem. Here is are those set of instructions: https://fair-chem.github.io/core/install.html .
+Now you have access to the UMA models. These instructions follow those given by the people at fairchem. Their set of instructions are here: https://fair-chem.github.io/core/install.html .
 
 **There is many different functionalities offered in vasp_emu and an example for each:**
 - ML Relaxation:
