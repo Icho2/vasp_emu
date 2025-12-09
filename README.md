@@ -2,10 +2,12 @@
 
 ## How to install:
 
-### Add the /bin directory to your PATH variable and path/to/vasp_emu/ to the $PYTHONPATH variable:
+### Add these variables to your ~/.bashrc (or wherever you store environment variables):
 ```
 export PATH=$PATH:/path/to/vasp_emu/bin/
 export PYTHONPATH=$PYTHONPATH:/path/to/vasp_emu/
+export PYTHONPATH=$PYTHONPATH:/home/ma62425/vasp_emu/tsase/
+export ASE_VASP_COMMAND="mpirun path/to/vasp/executable"
 ```
 **Acessing UMA models:**
 1. Set up a HuggingFace account here: https://huggingface.co
