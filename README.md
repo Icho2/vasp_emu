@@ -31,4 +31,4 @@ Now you have access to the UMA models. These instructions follow those given by 
   `examples\Cu_MD`
 
 - ML Molecular Dynamics with DFT checks:
-  comming soon
+  coming soon
