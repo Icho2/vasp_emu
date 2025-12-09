@@ -161,7 +161,6 @@ class Job(ABC):
 
         elif ptype == 'VASP':
             executable = os.environ['ASE_VASP_COMMAND'] 
-            ic(ptype, self.job_params['ml_helper'])
             if self.job_params['ml_helper'] != 'None':
                 self.potential= Vasp(command=executable,
                                         restart=True, directory='.',label='vasp', txt='-',
