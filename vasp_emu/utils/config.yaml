@@ -37,6 +37,11 @@ options:
         - cpu
         - cuda
 
+  # Sample ML steps from XDATCAR with DFT scf calculations
+  DFT_CHECK:
+    default: False
+    kind: boolean
+
   # VASP FLAG that determines force converge. IF EDIFFG < 0, then it represents the max norm of the force
   # IF EDIFFG > 0, then converged when abs[E_(i+1) - E_(i)] < EDIFFG
   # IF EDIFF = 0, then converged after NSW steps
@@ -333,7 +338,7 @@ options:
   
   # Flag that specifies the types of potentials that can be used
   POTENTIAL:
-    default: UMA
+    default: VASP
     kind: string
     values:
       - UMA

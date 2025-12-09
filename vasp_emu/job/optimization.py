@@ -6,6 +6,7 @@ import ase
 from ase.optimize.optimize import Optimizer
 
 from vasp_emu.job.job import Job
+import subprocess
 
 def opt_log(self, forces=None) -> str:
     """
@@ -93,5 +94,6 @@ class OptJob(Job):
             ase.io.write('CONTCAR', curr_structure, format='vasp')
             
             steps += 1
-
+        
         self.create_xdatcar()
+        self.restore_incar()
