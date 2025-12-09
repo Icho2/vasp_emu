@@ -1,0 +1,82 @@
+=======================================================
+                   SYSTEM INFORMATION                  
+=======================================================
+Platform:            Linux (6.1.0-40-amd64)
+Architecture:        x86_64
+Hostname:            saskatchewan.cm.utexas.edu
+Processor:            AMD EPYC 7272 12-Core Processor
+=======================================================
+=======================================================
+Starting a VASP_EMU job at 2025-12-09 13:56:06 CST
+=======================================================
+Reading inputs from INCAR
+=======================================================
+[38;5;247mic[39m[38;5;245m|[39m[38;5;245m [39m[38;5;247mptype[39m[38;5;245m:[39m[38;5;245m [39m[38;5;36m'[39m[38;5;36mVASP[39m[38;5;36m'[39m[38;5;245m,[39m[38;5;245m [39m[38;5;32mself[39m[38;5;245m.[39m[38;5;247mjob_params[39m[38;5;245m[[39m[38;5;36m'[39m[38;5;36mml_helper[39m[38;5;36m'[39m[38;5;245m][39m[38;5;245m:[39m[38;5;245m [39m[38;5;36m'[39m[38;5;36mNone[39m[38;5;36m'[39m
+[38;5;247mic[39m[38;5;245m|[39m[38;5;245m [39m[38;5;247mexecutable[39m[38;5;245m:[39m[38;5;245m [39m[38;5;36m'[39m[38;5;36mmpirun /home/ma62425/vasp/vasp.6.5.1/bin/vasp_gam[39m[38;5;36m'[39m
+[38;5;247mic[39m[38;5;245m|[39m[38;5;245m [39m[38;5;247mexecutable[39m[38;5;245m.[39m[38;5;247msplit[39m[38;5;245m([39m[38;5;245m)[39m[38;5;245m:[39m[38;5;245m [39m[38;5;245m[[39m[38;5;36m'[39m[38;5;36mmpirun[39m[38;5;36m'[39m[38;5;245m,[39m[38;5;245m [39m[38;5;36m'[39m[38;5;36m/home/ma62425/vasp/vasp.6.5.1/bin/vasp_gam[39m[38;5;36m'[39m[38;5;245m][39m
+ running    1 mpi-ranks, on    1 nodes
+ distrk:  each k-point on    1 cores,    1 groups
+ distr:  one band on    1 cores,    1 groups
+ Offloading initialized ...    1 GPUs detected
+ vasp.6.5.1 10Mar25 (build Nov 28 2025 17:35:53) gamma-only                      
+ POSCAR found type information on POSCAR H N 
+ POSCAR found :  2 types and       4 ions
+ scaLAPACK will be used selectively (only on CPU)
+ LDA part: xc-table for (Slater+PW92), standard interpolation
+ POSCAR found type information on POSCAR H N 
+ POSCAR found :  2 types and       4 ions
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ WARNING: random wavefunctions but no delay for mixing, default for NELMDL
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.582312122713E+02    0.58231E+02   -0.17634E+03    24   0.330E+02
+DAV:   2    -0.138436068886E+01   -0.59616E+02   -0.58707E+02    24   0.858E+01
+DAV:   3    -0.218579963155E+02   -0.20474E+02   -0.20474E+02    16   0.739E+01
+DAV:   4    -0.224544428928E+02   -0.59645E+00   -0.59645E+00    32   0.166E+01
+DAV:   5    -0.224545569462E+02   -0.11405E-03   -0.11405E-03    24   0.265E-01    0.174E+01
+DAV:   6    -0.196723378403E+02    0.27822E+01   -0.12668E+01    24   0.301E+01    0.251E+01
+DAV:   7    -0.196969716076E+02   -0.24634E-01   -0.35626E-02    16   0.170E+00    0.262E+01
+DAV:   8    -0.193580054549E+02    0.33897E+00   -0.52655E-01    24   0.397E+00    0.171E+00
+DAV:   9    -0.193516478516E+02    0.63576E-02   -0.11640E-02    32   0.119E+00    0.855E-01
+DAV:  10    -0.193481068056E+02    0.35410E-02   -0.15082E-02    24   0.116E+00    0.173E-01
+DAV:  11    -0.193501261541E+02   -0.20193E-02   -0.57190E-03    16   0.607E-01    0.280E-01
+DAV:  12    -0.193531355459E+02   -0.30094E-02   -0.13982E-03    16   0.332E-01    0.979E-02
+DAV:  13    -0.193572112942E+02   -0.40757E-02   -0.13927E-03    16   0.189E-01    0.654E-02
+DAV:  14    -0.193586501565E+02   -0.14389E-02   -0.13822E-04    32   0.841E-02    0.676E-02
+DAV:  15    -0.193612994229E+02   -0.26493E-02   -0.52035E-04    16   0.137E-01    0.321E-02
+DAV:  16    -0.193615892096E+02   -0.28979E-03   -0.57361E-05    32   0.480E-02    0.261E-02
+DAV:  17    -0.193622075519E+02   -0.61834E-03   -0.86110E-05    24   0.597E-02    0.508E-02
+DAV:  18    -0.193622318091E+02   -0.24257E-04   -0.86946E-06    24   0.230E-02    0.151E-02
+DAV:  19    -0.193622657205E+02   -0.33911E-04   -0.42329E-06    24   0.146E-02    0.117E-02
+DAV:  20    -0.193622875544E+02   -0.21834E-04   -0.31503E-06    16   0.146E-02    0.335E-03
+DAV:  21    -0.193622895279E+02   -0.19735E-05   -0.23319E-07    24   0.393E-03    0.318E-03
+DAV:  22    -0.193622920888E+02   -0.25609E-05   -0.11943E-07    16   0.181E-03    0.904E-04
+DAV:  23    -0.193622925754E+02   -0.48662E-06   -0.28948E-08    24   0.137E-03    0.642E-04
+DAV:  24    -0.193622935633E+02   -0.98784E-06   -0.25163E-08    16   0.955E-04    0.150E-04
+DAV:  25    -0.193622937177E+02   -0.15441E-06   -0.17156E-09    24   0.224E-04    0.217E-04
+DAV:  26    -0.193622939454E+02   -0.22771E-06   -0.41537E-09    16   0.389E-04    0.382E-05
+DAV:  27    -0.193622939920E+02   -0.46624E-07   -0.22681E-10    16   0.109E-04    0.386E-05
+DAV:  28    -0.193622940069E+02   -0.14894E-07   -0.13850E-10    24   0.810E-05    0.116E-05
+DAV:  29    -0.193622940060E+02    0.87840E-09   -0.18439E-11    24   0.204E-05
+   1 F= -.19362294E+02 E0= -.19366159E+02  d E =-.193623E+02
+ BRION: g(F)=  0.132E-05 g(S)=  0.000E+00
+ reached required accuracy - stopping structural energy minimisation
+ writing wavefunctions
+Warning: ieee_invalid is signaling
+Warning: ieee_divide_by_zero is signaling
+Warning: ieee_underflow is signaling
+Warning: ieee_inexact is signaling
+FORTRAN STOP
+Traceback (most recent call last):
+  File "/home/ma62425/vasp_emu/bin/vasp_emu", line 19, in <module>
+    emu.run()
+  File "/home/ma62425/vasp_emu/vasp_emu/emulate.py", line 264, in run
+    self.job.set_potential(ptype=self.config["potential"], pname=self.UMA_potential(), model=model, infer=self.config["inference"], device=self.config["device"])
+  File "/home/ma62425/vasp_emu/vasp_emu/job/job.py", line 195, in set_potential
+    sys.exit("Running normal vasp")
+    ^^^
+NameError: name 'sys' is not defined

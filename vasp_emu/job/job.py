@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import ase
 import ase.md
+import subprocess
 from ase.md.nose_hoover_chain import NoseHooverChainNVT 
 from ase.md.verlet import VelocityVerlet
 from ase.md.langevin import Langevin
@@ -156,36 +157,38 @@ class Job(ABC):
             else:
                 predictor = pretrained_mlip.get_predict_unit(model_name[model], device=device, inference_settings=settings)
             self.potential = FAIRChemCalculator(predictor, task_name=pname)
-                
+        
 
-        elif ptype == 'VASP':            
-            # Make a copy of a original INCAR because this VASP command overwrites it.
-            import subprocess
-            executable = os.environ["ASE_VASP_COMMAND"] 
-            self.potential= Vasp(command=executable,
-                                    restart=False, directory='vasp_run',
-                                     xc = self.job_params['gga'],
-                                     nsw = self.job_params['nsw'],
-                                     ediffg = self.job_params['ediffg'],
-                                     ediff = self.job_params['ediff'],
-                                     encut = self.job_params['encut'],
-                                     smass = self.job_params['smass'],
-                                     langevin_gamma = self.job_params['langevin_gamma'],
-                                     tebeg = self.job_params['tebeg'],
-                                     langevin_gamma_l = self.job_params['langevin_gamma_l'],
-                                     ispin = self.job_params['ispin'],
-                                     lreal = self.job_params['lreal'],
-                                     andersen_prob = self.job_params['andersen_prob'],
-                                     prec = self.job_params['prec'],
-                                     istart = self.job_params['istart'],
-                                     isif = self.job_params['isif'],
-                                     iopt = self.job_params['iopt'],
-                                     ichain = self.job_params['ichain'],
-                                     images = self.job_params['images'],
-                                     ibrion = self.job_params['ibrion'],
-                                     damping = self.job_params['damping'],
-                                     nblock  = self.job_params['nblock']
-                                     )
+        elif ptype == 'VASP':
+            executable = os.environ['ASE_VASP_COMMAND'] 
+            if self.job_params['ml_helper'] != 'None':
+                self.potential= Vasp(command=executable,
+                                        restart=True, directory='.',label='vasp', txt='-',
+                                        xc = self.job_params['gga'],
+                                        nsw = self.job_params['nsw'],
+                                        ediffg = self.job_params['ediffg'],
+                                        ediff = self.job_params['ediff'],
+                                        encut = self.job_params['encut'],
+                                        smass = self.job_params['smass'],
+                                        langevin_gamma = self.job_params['langevin_gamma'],
+                                        tebeg = self.job_params['tebeg'],
+                                        langevin_gamma_l = self.job_params['langevin_gamma_l'],
+                                        ispin = self.job_params['ispin'],
+                                        lreal = self.job_params['lreal'],
+                                        andersen_prob = self.job_params['andersen_prob'],
+                                        prec = self.job_params['prec'],
+                                        istart = self.job_params['istart'],
+                                        isif = self.job_params['isif'],
+                                        iopt = self.job_params['iopt'],
+                                        ichain = self.job_params['ichain'],
+                                        images = self.job_params['images'],
+                                        ibrion = self.job_params['ibrion'],
+                                        damping = self.job_params['damping'],
+                                        nblock  = self.job_params['nblock']
+                                        )
+            else:
+                subprocess.run(executable.split())
+                sys.exit("Running normal vasp")
 
         elif ptype == 'PYAMFF':
             try:
@@ -203,7 +206,6 @@ class Job(ABC):
             self.potential = EMT()
         else:
             raise ValueError(f"Unknown potential type '{ptype}' given")
-
 
     def create_xdatcar(self, delete:bool=False) -> None:
         """
@@ -294,7 +296,10 @@ class Job(ABC):
             "magnetization": magnetization
         }
 
-
+    # Running vasp through ase creates a new INCAR,
+    # so a temprory INCAR_COPY is made to replace this INCAR after the run.
+    def restore_incar(self) -> None:
+        subprocess.run(['mv', 'INCAR_COPY', 'INCAR'])
 #    def get_fmax(self, atoms:ase.Atoms) -> float:
 #        """Returns fmax, as used by optimizers."""
 #        forces = atoms.get_forces()

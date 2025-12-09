@@ -1,0 +1,12 @@
+ISTART =  1
+ISPIN  =  1
+PREC   = Normal
+
+EDIFF  =  1E-08
+ENCUT  = 300
+
+NSW    =  500
+IBRION =  1
+ISIF   =  2
+EDIFFG = -1E-02
+
