@@ -17,4 +17,18 @@ export ASE_VASP_COMMAND="mpirun path/to/vasp/executable"
 
 Now you have access to the UMA models. These instructions follow those given by the people at fairchem. Here is are those set of instructions: https://fair-chem.github.io/core/install.html .
 
-Head over to `\examples\O2_relaxation` for a quick start with vasp_emu.
+**There is many different functionalities offered in vasp_emu and an example for each:**
+- ML Relaxation:
+  `examples\O2_relaxation`
+
+- ML Relaxation followed by DFT relaxation:
+  `examples\ml_w_vasp`
+
+- ML NEB:
+  `examples\MeOH_rxn_neb`
+
+- ML Molecular Dynamics:
+  `examples\Cu_MD`
+
+- ML Molecular Dynamics with DFT checks:
+  comming soon
