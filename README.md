@@ -7,8 +7,7 @@
 export PATH=$PATH:/path/to/vasp_emu/bin/
 export PYTHONPATH=$PYTHONPATH:/path/to/vasp_emu/
 ```
-Acessing UMA models:
-**Ordered List:**
+**Acessing UMA models:**
 1. Set up a HuggingFace account here: https://huggingface.co
 2. Click on your account profile and select "Access Tokens"
 3. Generate an access token.
