@@ -187,7 +187,11 @@ options:
       - 6
       - 7
       - 8
-  
+
+  ISMEAR:
+    default: 1
+    kind: integer
+
   ISPIN:
     default: 1
     kind: integer
@@ -222,6 +226,19 @@ options:
     default: True
     kind: boolean
 
+  LCHARG:
+    default: True
+    kind: boolean
+
+  # whether to use climbing image for neb
+  LCLIMB:
+      default: True
+      kind: boolean
+  
+  LAECHG:
+    default: False
+    kind: boolean
+
   # Optimize the NEB globally instead of image-by-image when using LBFGS
   # Not yet implemented
   LGLOBAL:
@@ -238,10 +255,9 @@ options:
     default: False
     kind: boolean
   
-  # whether to use climbing image for neb
-  LCLIMB:
-      default: True
-      kind: boolean
+  LWAVE:
+    default: False
+    kind: boolean
 
   MAGMOM:
     default: !expand_floats "0.0"
@@ -374,6 +390,11 @@ options:
   # Not yet implemented
   SDALPHA:
     default: 0.01
+    kind: float 
+  
+  # specifies the width of the smearing in eV
+  SIGMA:
+    default: 0.2
     kind: float 
   
   SMASS:

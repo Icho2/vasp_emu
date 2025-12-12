@@ -8,5 +8,5 @@ ENCUT  = 300
 NSW    =  500
 IBRION =  1
 ISIF   =  2
-EDIFFG = -1E-02
+EDIFFG = -1E-03
 

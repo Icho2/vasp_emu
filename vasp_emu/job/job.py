@@ -163,7 +163,7 @@ class Job(ABC):
             executable = os.environ['ASE_VASP_COMMAND'] 
             if self.job_params['ml_helper'] != 'None':
                 self.potential= Vasp(command=executable,
-                                        restart=True, directory='.',label='vasp', txt='-',
+                                        restart=False, directory='.',label='vasp', txt='-',
                                         xc = self.job_params['gga'],
                                         nsw = self.job_params['nsw'],
                                         ediffg = self.job_params['ediffg'],
