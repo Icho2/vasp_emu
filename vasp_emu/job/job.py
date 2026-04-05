@@ -14,6 +14,7 @@ from ase.md.langevin import Langevin
 from ase.md.andersen import Andersen  
 from ase.calculators.emt import EMT
 from ase.calculators.vasp import Vasp
+from vasp_emu.utils.calculators.double_well import icho_potential
 import ase.io
 from ase.optimize import BFGS, FIRE, MDMin
 from ase.optimize.sciopt import SciPyFminCG
@@ -204,6 +205,9 @@ class Job(ABC):
                 raise FileNotFoundError("No PyAMFF potential file found.")
         elif ptype == "EMT":
             self.potential = EMT()
+        
+        elif ptype == "DOUBLE_WELL":
+            self.potential = icho_potential()
         else:
             raise ValueError(f"Unknown potential type '{ptype}' given")
 
